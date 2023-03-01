@@ -18,8 +18,8 @@ defmodule Rivet.Utils.LazyCache do
 
       Returns `{:ok, PID}`.
       """
-      @spec start() :: {atom, pid}
-      def start() do
+      @spec start_link(term()) :: {atom, pid}
+      def start_link(_) do
         GenServer.start_link(__MODULE__, %{})
       end
 
