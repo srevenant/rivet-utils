@@ -49,7 +49,7 @@ defmodule Rivet.Utils.MixProject do
   defp package() do
     [
       files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
-      licenses: ["AGPL-3.0-or-later"],
+      licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/srevenant/rivet-utils"},
       source_url: "https://github.com/srevenant/rivet-utils"
     ]
