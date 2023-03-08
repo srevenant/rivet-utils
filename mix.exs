@@ -36,7 +36,7 @@ defmodule Rivet.Utils.MixProject do
       {:mix_test_watch, "~> 0.8", only: [:test, :dev], runtime: false},
       {:excoveralls, "~> 0.14", only: :test},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:transmogrify, "~> 1.0"},
+      {:transmogrify, "~> 1.1"},
       {:ecto, "~> 3.7"},
       {:jason, "~> 1.0"},
       {:timex, "~> 3.0"},
