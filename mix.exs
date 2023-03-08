@@ -41,7 +41,8 @@ defmodule Rivet.Utils.MixProject do
       {:jason, "~> 1.0"},
       {:timex, "~> 3.0"},
       {:csv, "~> 2.3"},
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 
