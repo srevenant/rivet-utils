@@ -147,7 +147,7 @@ defmodule Rivet.Utils.LazyCache do
         end
       end
 
-      defp purge_cache() do
+      def purge_cache() do
         if size() > 0 do
           for key <- get_keyset(), do: purge(key)
         end
