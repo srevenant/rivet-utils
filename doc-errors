@@ -1,0 +1,15 @@
+Generating docs...
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:15 Illegal attributes ["\"m\"]", "\"30\",", "m\",", "[\"30", "min,"] ignored in IAL
+
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:39 Illegal attributes ["[1,2,3]", "ok,"] ignored in IAL
+
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:42 Illegal attributes ["\"nan\"", "error,"] ignored in IAL
+
+warning: index.html redirects to Rivet.Utils.html, which does not exist
+View "html" docs at "doc/index.html"
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:15 Illegal attributes ["\"m\"]", "\"30\",", "m\",", "[\"30", "min,"] ignored in IAL
+
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:39 Illegal attributes ["[1,2,3]", "ok,"] ignored in IAL
+
+warning: ExDoc.Markdown.Earmark (warning) /Users/brandon/share/dev/rivet-utils/lib/enum.ex:42 Illegal attributes ["\"nan\"", "error,"] ignored in IAL
+

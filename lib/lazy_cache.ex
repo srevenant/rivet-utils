@@ -1,16 +1,15 @@
 defmodule Rivet.Utils.LazyCache do
+  @moduledoc """
+  Originally lazy_cache @ https://hex.pm/packages/lazy_cache; but with updates.
+  """
+
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
-      @buckets Keyword.get(opts, :bucket_key)
-      @keyset Keyword.get(opts, :keyset_key)
+      @bucket String.to_atom("#{__MODULE__}.BUCKET")
+      @keyset String.to_atom("#{__MODULE__}.KEYSET")
       require Logger
       use GenServer
       import Rivet.Utils.Time, only: [epoch_time: 1]
-
-      @moduledoc """
-      Originally lazy_cache @ https://hex.pm/packages/lazy_cache; but changed
-      to allow embedding w/`use`
-      """
 
       @doc """
       Start scheduling the works for clearing the cache.
@@ -36,7 +35,7 @@ defmodule Rivet.Utils.LazyCache do
         else
           is_inserted =
             :ets.insert(
-              @buckets,
+              @bucket,
               {key, value, get_keepalive(keepAliveInMillis)}
             )
 
@@ -55,10 +54,10 @@ defmodule Rivet.Utils.LazyCache do
       Returns `[{your_stored_tuple}]`.
       """
       def lookup(key) do
-        :ets.lookup(@buckets, key)
+        :ets.lookup(@bucket, key)
       rescue
         err ->
-          Logger.warn("Cache lookup error #{inspect(@buckets)} #{inspect(key)} #{inspect(err)}")
+          Logger.warn("Cache lookup error #{inspect(@bucket)} #{inspect(key)} #{inspect(err)}")
           :error
       end
 
@@ -69,7 +68,7 @@ defmodule Rivet.Utils.LazyCache do
       """
       @spec delete(atom()) :: boolean()
       def delete(key) do
-        with true <- :ets.delete(@buckets, key) do
+        with true <- :ets.delete(@bucket, key) do
           delete_from_keyset(get_keyset(), key)
           true
         end
@@ -162,12 +161,14 @@ defmodule Rivet.Utils.LazyCache do
 
       @impl true
       def init(state) do
-        # Schedule work to be performed on start
-        schedule_work()
         # Create table
-        :ets.new(@buckets, [:set, :public, :named_table])
+        :ets.new(@bucket, [:set, :public, :named_table])
         :ets.new(@keyset, [:set, :public, :named_table])
         :ets.insert(@keyset, {:keys, []})
+
+        # Schedule work to be performed on start
+        schedule_work()
+
         {:ok, state}
       end
 
@@ -181,10 +182,8 @@ defmodule Rivet.Utils.LazyCache do
         {:noreply, state}
       end
 
-      defp schedule_work() do
-        # Each second
-        Process.send_after(self(), :work, 1000)
-      end
+      # once a minute is fine. we're lazy right?
+      defp schedule_work(), do: Process.send_after(self(), :work, 60_000)
     end
   end
 end
