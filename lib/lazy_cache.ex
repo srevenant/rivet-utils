@@ -160,6 +160,9 @@ defmodule Rivet.Utils.LazyCache do
       end
 
       @impl true
+
+      # TODO: switch init to a handle_continue; add a :status to the state
+
       def init(state) do
         # Create table
         :ets.new(@bucket, [:set, :public, :named_table])
