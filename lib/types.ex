@@ -21,7 +21,7 @@ defmodule Rivet.Utils.Types do
   """
   @spec lookup_address(String.t() | charlist()) :: {:ok, tuple()} | {:error, term()}
   def lookup_address(address) when is_binary(address),
-   do: lookup_address(to_charlist(address))
+    do: lookup_address(to_charlist(address))
 
   def lookup_address(address) when is_list(address) do
     # parse_address/1 returns {:ok, ip} if successful. If there's an error,
