@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "1.0.3",
+      version: "1.0.4",
       elixir: "~> 1.13",
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
