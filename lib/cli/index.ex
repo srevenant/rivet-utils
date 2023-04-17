@@ -14,6 +14,7 @@ defmodule Rivet.Utils.Cli do
          :ok <- apply(module, :run, [opts, matched, args]) do
       :ok
     else
+      {[], [], []} -> syntax(opts, "Unmatched command")
       {x, y, errors} -> IO.inspect({x, y, errors}, label: "ERRORS")
       {:error, msg} -> syntax(opts, msg)
       {:nomatch, cmd} -> syntax(opts, "Unmatched command: #{cmd}")
