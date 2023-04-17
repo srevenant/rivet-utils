@@ -3,14 +3,43 @@ defmodule Rivet.Utils.Time do
   Contributor: Brandon Gillespie
   """
 
-  import Rivet.Utils.Types, only: [as_int!: 2, as_float: 1]
+  import Rivet.Utils.Types, only: [as_float: 1]
   import Rivet.Utils.Enum, only: [enum_rx: 2]
 
   def ifloor(number) when is_float(number), do: Kernel.trunc(number)
   def ifloor(number) when is_integer(number), do: number
 
   # note for future
-  # https://hexdocs.pm/nimble_parsec/NimbleParsec.html
+  @doc """
+  iex> utc_offset(:string)
+  "-06:00"
+  iex> utc_offset(:minutes)
+  -360
+  iex> utc_offset(:hour_min)
+  {-6, 0}
+  """
+  def utc_offset(:string) do
+    p = fn x -> String.pad_leading("#{x}", 2, "0") end
+
+    case :calendar.time_difference(:calendar.universal_time(), :calendar.local_time()) do
+      {0, {hour, min, _}} -> "+#{p.(hour)}:#{p.(min)}"
+      {-1, {hour, min, _}} -> "-#{p.(24 - hour)}:#{p.(min)}"
+    end
+  end
+
+  def utc_offset(:minutes) do
+    case :calendar.time_difference(:calendar.universal_time(), :calendar.local_time()) do
+      {0, {hour, min, _}} -> hour * 60 + min
+      {-1, {hour, min, _}} -> (hour - 24) * 60 - min
+    end
+  end
+
+  def utc_offset(:hour_min) do
+    case :calendar.time_difference(:calendar.universal_time(), :calendar.local_time()) do
+      {0, {hour, min, _}} -> {hour, min}
+      {-1, {hour, min, _}} -> {hour - 24, -min}
+    end
+  end
 
   def iso_time_range(input) when is_binary(input) do
     case String.split(input, "/") do
@@ -25,7 +54,7 @@ defmodule Rivet.Utils.Time do
   def iso_time_range(stime, etime) when is_binary(stime) and is_binary(etime) do
     with {:ok, d_stime = %DateTime{}, _offset} <- DateTime.from_iso8601(stime),
          {:ok, d_etime = %DateTime{}, _offset} <- DateTime.from_iso8601(etime) do
-      {:ok, d_stime, d_etime, Timex.to_unix(d_etime) - Timex.to_unix(d_stime)}
+      {:ok, d_stime, d_etime, DateTime.to_unix(d_etime) - DateTime.to_unix(d_stime)}
     else
       {:error, reason} ->
         IO.inspect(reason, label: "processing time error")
@@ -33,118 +62,119 @@ defmodule Rivet.Utils.Time do
     end
   end
 
-  @doc """
-  Iterate a map and merge string & atom keys into just atoms.
-  Not recursive, only top level.
-  Behavior with mixed keys being merged is not guaranteed, as maps are not always
-  ordered.
-
-  ## Examples
-
-  iex> {:ok, %DateTime{}, %DateTime{}, elapsed} = time_range("20 min")
-  iex> elapsed
-  1200
-  """
-  def time_range(input) do
-    time_range(input, DateTime.utc_now())
-  end
-
-  def time_range(input, %DateTime{} = reference) do
-    # regex list of supported variants
-    time_rxs = [
-      {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*$/i,
-       fn match, _time ->
-         stime = time_at_today(match, reference)
-         {stime, stime}
-       end},
-      {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*-\s*(.+)\s*$/i,
-       fn match, _time ->
-         stime = time_at_today(Enum.slice(match, 0, 6), reference)
-
-         case time_at_today(Enum.at(match, 6), reference) do
-           nil ->
-             nil
-
-           %DateTime{} = etime ->
-             etime =
-               if etime < stime do
-                 # assume 12hrs left off
-                 Timex.shift(etime, hours: 12)
-               else
-                 etime
-               end
-
-             {stime, etime}
-         end
-       end},
-      {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*\+\s*(.+)\s*$/i,
-       fn match, _time ->
-         stime = time_at_today(Enum.slice(match, 0, 6), reference)
-
-         case time_duration(Enum.at(match, 6)) do
-           nil ->
-             nil
-
-           mins ->
-             {stime, Timex.shift(stime, minutes: mins)}
-         end
-       end},
-      {~r/^\s*([0-9.]+)\s*([a-z]+)?$/i,
-       fn match, _time ->
-         case time_duration(match) do
-           nil ->
-             nil
-
-           mins ->
-             {Timex.shift(reference, minutes: -mins), reference}
-         end
-       end}
-    ]
-
-    case enum_rx(time_rxs, input) do
-      nil ->
-        {:error, "Sorry, I don't understand the time range #{inspect(input)}"}
-
-      {stime, etime} ->
-        {:ok, stime, etime, Timex.to_unix(etime) - Timex.to_unix(stime)}
-    end
-  end
-
-  def hr_to_zulu(hr, ""), do: hr
-  def hr_to_zulu(hr, "A"), do: hr
-
-  def hr_to_zulu(hr, "P") do
-    hr + 12
-  end
-
-  def time_at_today(input, reference) when is_binary(input),
-    do: time_at_today(Regex.run(~r/^\s*((\d+):(\d+))\s*((p|a)m?)?$/i, input), reference)
-
-  def time_at_today(nil, _reference), do: nil
-
-  def time_at_today(regmatch, reference) do
-    {mhr, mmin} =
-      case regmatch do
-        [_, _, hr, min] ->
-          {as_int!(hr, 0), as_int!(min, 0)}
-
-        [_, _, hr, min, _ampm, ap] ->
-          {as_int!(hr, 0) |> hr_to_zulu(String.upcase(ap)), as_int!(min, 0)}
-      end
-
-    # this is a fail if we don't consider timezone
-    # drop today's time, then add it back in
-    reference
-    |> Timex.to_date()
-    |> Timex.to_datetime()
-    |> Timex.shift(hours: mhr)
-    |> Timex.shift(minutes: mmin)
-
-    #    now_t = Timex.to_unix(reference)
-    #    midnight_t = now_t - rem(now_t, 86400)
-    #    adjusted_t = midnight_t + mhr * 3600 + mmin * 60
-    #    DateTime.from_unix!(adjusted_t)
-  end
+  #### Disabled because it requires us to include Timex
+  # @doc """
+  # Iterate a map and merge string & atom keys into just atoms.
+  # Not recursive, only top level.
+  # Behavior with mixed keys being merged is not guaranteed, as maps are not always
+  # ordered.
+  #
+  # ## Examples
+  #
+  # iex> {:ok, %DateTime{}, %DateTime{}, elapsed} = time_range("20 min")
+  # iex> elapsed
+  # 1200
+  # """
+  # def time_range(input) do
+  #   time_range(input, DateTime.utc_now())
+  # end
+  #
+  # def time_range(input, %DateTime{} = reference) do
+  #   # regex list of supported variants
+  #   time_rxs = [
+  #     {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*$/i,
+  #      fn match, _time ->
+  #        stime = time_at_today(match, reference)
+  #        {stime, stime}
+  #      end},
+  #     {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*-\s*(.+)\s*$/i,
+  #      fn match, _time ->
+  #        stime = time_at_today(Enum.slice(match, 0, 6), reference)
+  #
+  #        case time_at_today(Enum.at(match, 6), reference) do
+  #          nil ->
+  #            nil
+  #
+  #          %DateTime{} = etime ->
+  #            etime =
+  #              if etime < stime do
+  #                # assume 12hrs left off
+  #                Timex.shift(etime, hours: 12)
+  #              else
+  #                etime
+  #              end
+  #
+  #            {stime, etime}
+  #        end
+  #      end},
+  #     {~r/^\s*((\d+):(\d+))\s*((p|a)m?)?\s*\+\s*(.+)\s*$/i,
+  #      fn match, _time ->
+  #        stime = time_at_today(Enum.slice(match, 0, 6), reference)
+  #
+  #        case time_duration(Enum.at(match, 6)) do
+  #          nil ->
+  #            nil
+  #
+  #          mins ->
+  #            {stime, Timex.shift(stime, minutes: mins)}
+  #        end
+  #      end},
+  #     {~r/^\s*([0-9.]+)\s*([a-z]+)?$/i,
+  #      fn match, _time ->
+  #        case time_duration(match) do
+  #          nil ->
+  #            nil
+  #
+  #          mins ->
+  #            {Timex.shift(reference, minutes: -mins), reference}
+  #        end
+  #      end}
+  #   ]
+  #
+  #   case enum_rx(time_rxs, input) do
+  #     nil ->
+  #       {:error, "Sorry, I don't understand the time range #{inspect(input)}"}
+  #
+  #     {stime, etime} ->
+  #       {:ok, stime, etime, Timex.to_unix(etime) - Timex.to_unix(stime)}
+  #   end
+  # end
+  #
+  # def hr_to_zulu(hr, ""), do: hr
+  # def hr_to_zulu(hr, "A"), do: hr
+  #
+  # def hr_to_zulu(hr, "P") do
+  #   hr + 12
+  # end
+  #
+  # def time_at_today(input, reference) when is_binary(input),
+  #   do: time_at_today(Regex.run(~r/^\s*((\d+):(\d+))\s*((p|a)m?)?$/i, input), reference)
+  #
+  # def time_at_today(nil, _reference), do: nil
+  #
+  # def time_at_today(regmatch, reference) do
+  #   {mhr, mmin} =
+  #     case regmatch do
+  #       [_, _, hr, min] ->
+  #         {as_int!(hr, 0), as_int!(min, 0)}
+  #
+  #       [_, _, hr, min, _ampm, ap] ->
+  #         {as_int!(hr, 0) |> hr_to_zulu(String.upcase(ap)), as_int!(min, 0)}
+  #     end
+  #
+  #   # this is a fail if we don't consider timezone
+  #   # drop today's time, then add it back in
+  #   reference
+  #   |> Timex.to_date()
+  #   |> Timex.to_datetime()
+  #   |> Timex.shift(hours: mhr)
+  #   |> Timex.shift(minutes: mmin)
+  #
+  #   #    now_t = Timex.to_unix(reference)
+  #   #    midnight_t = now_t - rem(now_t, 86400)
+  #   #    adjusted_t = midnight_t + mhr * 3600 + mmin * 60
+  #   #    DateTime.from_unix!(adjusted_t)
+  # end
 
   def time_duration([match, match1]), do: time_duration([match, match1, ""])
 

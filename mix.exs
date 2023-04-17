@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "1.0.4",
+      version: "1.0.5",
       elixir: "~> 1.13",
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
@@ -27,7 +27,7 @@ defmodule Rivet.Utils.MixProject do
 
   # Run "mix help compile.app" to learn about applications.
   def application do
-    [extra_applications: [:logger, :timex]]
+    [extra_applications: [:logger]]
   end
 
   # Run "mix help deps" to learn about dependencies.
@@ -39,7 +39,6 @@ defmodule Rivet.Utils.MixProject do
       {:transmogrify, "~> 1.1"},
       {:ecto, "~> 3.7"},
       {:jason, "~> 1.0"},
-      {:timex, "~> 3.0"},
       {:csv, "~> 2.3"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
