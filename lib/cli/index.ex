@@ -35,7 +35,7 @@ defmodule Rivet.Utils.Cli do
   ##############################################################################
   def syntax(opts, msg) do
     stderr([list_commands(opts), list_options(opts)])
-    abort(msg)
+    die(msg)
   end
 
   ##############################################################################
@@ -121,7 +121,7 @@ defmodule Rivet.Utils.Cli do
     case String.split(pattern, "?") do
       [root] -> match_command(cmd, root, [])
       [root | [tail]] -> match_command(cmd, root, String.graphemes(tail))
-      _ -> abort("Invalid command pattern #{pattern}")
+      _ -> die("Invalid command pattern #{pattern}")
     end
   end
 
