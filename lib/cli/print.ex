@@ -5,7 +5,7 @@ defmodule Rivet.Utils.Cli.Print do
 
   alias IO.ANSI
 
-  def abort(reason) do
+  def die(reason) do
     error(reason)
     exit({:shutdown, 1})
   end
