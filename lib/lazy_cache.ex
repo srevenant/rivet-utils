@@ -6,7 +6,6 @@ defmodule Rivet.Utils.LazyCache do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       @bucket String.to_atom("#{__MODULE__}.BUCKET")
-      @keyset String.to_atom("#{__MODULE__}.KEYSET")
       require Logger
       use GenServer
       import Rivet.Utils.Time, only: [epoch_time: 1]
@@ -33,18 +32,10 @@ defmodule Rivet.Utils.LazyCache do
           {:error,
            "Keep Alive Time is not valid. Should be a positive Integer or :keep_alive_forever."}
         else
-          is_inserted =
-            :ets.insert(
-              @bucket,
-              {key, value, get_keepalive(keepAliveInMillis)}
-            )
-
-          get_keyset()
-          |> check_if_key_already_in_keyset(key)
-
-          with true <- is_inserted do
-            append_to_keyset(get_keyset(), key)
-          end
+          :ets.insert(
+            @bucket,
+            {key, value, get_keepalive(keepAliveInMillis)}
+          )
         end
       end
 
@@ -68,10 +59,7 @@ defmodule Rivet.Utils.LazyCache do
       """
       @spec delete(atom()) :: boolean()
       def delete(key) do
-        with true <- :ets.delete(@bucket, key) do
-          delete_from_keyset(get_keyset(), key)
-          true
-        end
+        :ets.delete(@bucket, key)
       end
 
       @doc """
@@ -81,7 +69,7 @@ defmodule Rivet.Utils.LazyCache do
       """
       @spec size() :: integer
       def size() do
-        length(get_keyset())
+        :ets.select_count(@bucket, [{{:_, :_, :_}, [], [true]}])
       end
 
       @doc """
@@ -91,12 +79,7 @@ defmodule Rivet.Utils.LazyCache do
       """
       @spec clear() :: boolean
       def clear() do
-        if size() == 0 do
-          false
-        else
-          for key <- get_keyset(), do: delete(key)
-          true
-        end
+        :ets.delete_all_objects(@bucket)
       end
 
       defp get_keepalive(keepAliveInMillis) do
@@ -113,50 +96,12 @@ defmodule Rivet.Utils.LazyCache do
              (is_integer(keepAliveInMillis) and keepAliveInMillis > 0))
       end
 
-      defp update_key_set(key_set) do
-        :ets.delete(@keyset, :keys)
-        :ets.insert(@keyset, {:keys, key_set})
-      end
-
-      defp check_if_key_already_in_keyset(key_set, key) do
-        if Enum.member?(key_set, key) do
-          delete_from_keyset(key_set, key)
-        end
-      end
-
-      defp delete_from_keyset(key_set, key) do
-        List.delete(key_set, key)
-        |> update_key_set()
-      end
-
-      defp append_to_keyset(key_set, key) do
-        (key_set ++ [key])
-        |> update_key_set()
-      end
-
-      defp purge(key) do
-        case lookup(key) do
-          [element] ->
-            if(elem(element, 2) <= epoch_time(:millisecond)) do
-              delete(key)
-            end
-
-          [] ->
-            :ok
-        end
-      end
-
       def purge_cache() do
-        if size() > 0 do
-          for key <- get_keyset(), do: purge(key)
-        end
-      end
+        now = epoch_time(:millisecond)
 
-      defp get_keyset() do
-        case :ets.lookup(@keyset, :keys)[:keys] do
-          nil -> []
-          other -> other
-        end
+        :ets.select_delete(@bucket, [
+          {{:_, :_, :"$1"}, [{:is_number, :"$1"}, {:"=<", :"$1", now}], [true]}
+        ])
       end
 
       @impl true
@@ -166,8 +111,6 @@ defmodule Rivet.Utils.LazyCache do
       def init(state) do
         # Create table
         :ets.new(@bucket, [:set, :public, :named_table])
-        :ets.new(@keyset, [:set, :public, :named_table])
-        :ets.insert(@keyset, {:keys, []})
 
         # Schedule work to be performed on start
         schedule_work()
