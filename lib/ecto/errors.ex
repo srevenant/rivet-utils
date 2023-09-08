@@ -69,7 +69,7 @@ defmodule Rivet.Utils.Ecto.Errors do
     do: log_error(convert_error_changeset(chgset), src) |> IO.inspect()
 
   def log_error({:error, error} = pass, src) do
-    Logger.warn(error, src: src)
+    Logger.warning(error, src: src)
     pass
   end
 end

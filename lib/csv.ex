@@ -7,15 +7,11 @@ defmodule Rivet.Utils.CSV do
   """
 
   @doc """
-  iex> parse_line("this,that,line,10")
-  ["this", "that", "line", 10]
+  iex> parse_line("this,that,line,10,3.14")
+  ["this", "that", "line", 10, 3.14]
   """
   def parse_line(line) do
-    index = 0
-    options = []
-
-    with {:ok, lex, _} <- CSV.Decoding.Lexer.lex({line, index}, options),
-         {:ok, parsed, _} <- CSV.Decoding.Parser.parse({lex, index}, options) do
+    with [ok: parsed] <- CSV.decode([line]) |> Enum.take(1) do
       Enum.map(parsed, fn e ->
         func =
           if String.contains?(e, "."),

@@ -48,7 +48,7 @@ defmodule Rivet.Utils.LazyCache do
         :ets.lookup(@bucket, key)
       rescue
         err ->
-          Logger.warn("Cache lookup error #{inspect(@bucket)} #{inspect(key)} #{inspect(err)}")
+          Logger.warning("Cache lookup error #{inspect(@bucket)} #{inspect(key)} #{inspect(err)}")
           :error
       end
 
