@@ -208,7 +208,7 @@ defmodule Rivet.Utils.Types do
   @doc """
 
   iex> map_to_kvstr(%{a: "b", c: "10", d: "longer with space"})
-  to_string('a=b c=10 d="longer with space"')
+  "c=10 a=b d=\\"longer with space\\""
   """
   def map_to_kvstr(map) do
     Enum.map_join(map, " ", fn {k, v} ->
