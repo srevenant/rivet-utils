@@ -58,7 +58,7 @@ defmodule Rivet.Utils.UniformLogFormat do
   Dicts end up being alphabetic keys due to their nature:
 
   iex> format_msg(%{key: 10, other: 20, a: 5}, %{}) |> IO.iodata_to_binary()
-  " a=5 key=10 other=20"
+  " other=20 a=5 key=10"
 
   Keyword lists will stay in-order:
 

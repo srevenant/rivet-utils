@@ -28,7 +28,7 @@ defmodule Rivet.Utils.Test.UniformLogFormat do
   describe "redact_sensitive/1" do
     test "removes password and key data from data-txt" do
       raw = [%{this: "fugly", password: "that", super_key: <<10, 11, 12>>, narf: 1}]
-      expect = "[%{narf: 1, password:*** super_key:*** this: \"fugly\"}]"
+      expect = "[%{this: \"fugly\", password:*** super_key:*** narf: 1}]"
 
       assert UniformLogFormat.data2txt(raw) == expect
     end
