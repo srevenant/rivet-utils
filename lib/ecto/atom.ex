@@ -18,7 +18,7 @@ defmodule Rivet.Utils.Ecto.Atom do
   def embed_as(_), do: :self
 
   def cast(value) when is_atom(value), do: {:ok, value}
-  def cast(value) when is_binary(value), do: Transmogrify.As.as_atom(value)
+  def cast(value) when is_binary(value), do: {:ok, String.to_atom(value)}
   def cast(_), do: :error
 
   def load(value), do: Transmogrify.As.as_atom(value)
