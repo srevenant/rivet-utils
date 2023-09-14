@@ -106,30 +106,17 @@ defmodule Rivet.Utils.LazyCache do
 
       @impl true
 
-      # TODO: switch init to a handle_continue; add a :status to the state
-
+      # TODO: add a :status to the state
       def init(state) do
+        # TODO: switch init to a handle_continue
         # Create table
         :ets.new(@bucket, [:set, :public, :named_table])
 
-        # Schedule work to be performed on start
-        schedule_work()
+        # once a minute is fine. we're lazy right?
+        :timer.apply_interval(60_000, __MODULE__, :purge_cache, [])
 
         {:ok, state}
       end
-
-      @impl true
-      def handle_info(:work, state) do
-        # Do the desired work here
-        purge_cache()
-
-        # Reschedule once more
-        schedule_work()
-        {:noreply, state}
-      end
-
-      # once a minute is fine. we're lazy right?
-      defp schedule_work(), do: Process.send_after(self(), :work, 60_000)
     end
   end
 end
