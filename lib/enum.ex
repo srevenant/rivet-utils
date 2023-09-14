@@ -5,7 +5,7 @@ defmodule Rivet.Utils.Enum do
 
   @doc """
   like Enum.find_value() on a list of [{rx, fn}, ..], calling fn on the matched
-  rx and returning the result.  Almost like a case statement (see to_minutes below)
+  rx and returning the result.
 
   iex> opts = [
   ...>   {~r/^(\\d+)\\s*(m|min(s)?|minute(s)?)$/, fn match, _ -> {:min, match} end},
@@ -31,24 +31,24 @@ defmodule Rivet.Utils.Enum do
     end
   end
 
-  @doc """
-  sequence helps you know if any item in a list of tuples failed
-
-  iex> vals = [ok: 1, ok: 2, ok: 3]
-  ...> sequence(vals)
-  {:ok, [1,2,3]}
-  iex> vals = [ok: 1, error: "nan", ok: 3]
-  ...> sequence(vals)
-  {:error, "nan"}
-  """
-  @spec sequence(list(keyword())) :: {:error, any()} | {:ok, list(any())}
-  def sequence(keywords) do
-    keywords
-    |> Enum.reverse()
-    |> Enum.reduce({:ok, []}, fn
-      _, {:error, err} -> {:error, err}
-      {:error, err}, _ -> {:error, err}
-      {:ok, val}, {:ok, vals} -> {:ok, [val | vals]}
-    end)
-  end
+  # @doc """
+  # sequence helps you know if any item in a list of tuples failed
+  #
+  # iex> vals = [ok: 1, ok: 2, ok: 3]
+  # ...> sequence(vals)
+  # {:ok, [1,2,3]}
+  # iex> vals = [ok: 1, error: "nan", ok: 3]
+  # ...> sequence(vals)
+  # {:error, "nan"}
+  # """
+  # @spec sequence(list(keyword())) :: {:error, any()} | {:ok, list(any())}
+  # def sequence(keywords) do
+  #   keywords
+  #   |> Enum.reverse()
+  #   |> Enum.reduce({:ok, []}, fn
+  #     _, {:error, err} -> {:error, err}
+  #     {:error, err}, _ -> {:error, err}
+  #     {:ok, val}, {:ok, vals} -> {:ok, [val | vals]}
+  #   end)
+  # end
 end

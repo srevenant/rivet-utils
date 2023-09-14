@@ -3,7 +3,7 @@ defmodule Rivet.Utils.Time do
   Contributor: Brandon Gillespie
   """
 
-  import Rivet.Utils.Types, only: [as_float: 1]
+  import Transmogrify.As, only: [as_float: 1]
   import Rivet.Utils.Enum, only: [enum_rx: 2]
 
   def ifloor(number) when is_float(number), do: Kernel.trunc(number)
