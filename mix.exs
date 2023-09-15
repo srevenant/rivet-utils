@@ -42,8 +42,7 @@ defmodule Rivet.Utils.MixProject do
       {:jason, "~> 1.0"},
       {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
       {:puid, "~> 2.0"},
-      # {:transmogrify, "~> 2.0.2"}
-      {:transmogrify, "~> 2.0.2", git: "https://github.com/srevenant/transmogrify.git", branch: "master"}
+      {:transmogrify, "~> 2.0.2"}
     ]
   end
 
