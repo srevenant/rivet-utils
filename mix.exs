@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "1.2.0",
+      version: "2.0.0",
       elixir: "~> 1.14",
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
@@ -33,14 +33,16 @@ defmodule Rivet.Utils.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
-      {:excoveralls, "~> 0.14", only: :test},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:transmogrify, "~> 1.1"},
-      {:ecto, "~> 3.7"},
-      {:jason, "~> 1.0"},
+      {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:ecto, "~> 3.7"},
+      {:excoveralls, "~> 0.14", only: :test},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:jason, "~> 1.0"},
+      {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
+      {:puid, "~> 2.0"},
+      {:transmogrify, "~> 2.0.2"}
     ]
   end
 

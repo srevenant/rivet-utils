@@ -3,7 +3,7 @@ defmodule Rivet.Utils.Dig do
   Contributor: Brandon Gillespie
   """
 
-  import Rivet.Utils.Types, only: [as_atom: 1]
+  import Transmogrify.As
 
   @rx_split ~r/\.(?=[^\]]*(?:\[|$))/
   @rx_index ~r/^(.*)\[{(.*[^\]]*)}\]$/
@@ -37,8 +37,8 @@ defmodule Rivet.Utils.Dig do
   def dig_keys(key, opts) when is_binary(key) do
     key_to_atom =
       if Keyword.get(opts, :snake_case, false),
-        do: &to_atom_snaked/1,
-        else: &as_atom/1
+        do: &as_key!/1,
+        else: &as_atom!/1
 
     Regex.split(@rx_split, key)
     |> Enum.reduce([], fn e, acc ->
@@ -60,10 +60,6 @@ defmodule Rivet.Utils.Dig do
 
   def dig_keys(key, _opts) when is_list(key) do
     Enum.map(key, &%{direct: true, key: &1})
-  end
-
-  defp to_atom_snaked(val) do
-    Transmogrify.snakecase(val) |> as_atom
   end
 
   @doc """

@@ -18,8 +18,7 @@ defmodule Rivet.Utils.Ecto.AtomKeymap do
   def load(m), do: cast(m)
 
   ##############################################################################
-  def cast(vars) when is_map(vars),
-    do: {:ok, Transmogrify.transmogrify(vars, key_convert: :atom)}
+  def cast(vars) when is_map(vars), do: {:ok, Transmogrify.transmogrify(vars, key_convert: :atom)}
 
   def cast(_), do: :error
 end

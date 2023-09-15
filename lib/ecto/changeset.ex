@@ -5,7 +5,7 @@ defmodule Rivet.Utils.Ecto.Changeset do
   Contributor: Brandon Gillespie
   """
   import Ecto.Changeset, only: [validate_change: 4, get_change: 2, put_change: 3, add_error: 3]
-  import Rivet.Utils.Types, only: [clean_atom: 1]
+  import Transmogrify.As
 
   # easier to just borrow from Ecto
   defp message(opts, key \\ :message, default) do
@@ -75,21 +75,9 @@ defmodule Rivet.Utils.Ecto.Changeset do
   If the key exists in the changeset, make sure it's a clean value
   """
 
-  # def validate_clean_atom(%{changes: changes} = chgset, key) do
-  #   with {:ok, value} <- Map.fetch(changes, key) do
-  #     if is_binary(value) do
-  #       put_change(chgset, key, clean_atom(value))
-  #     else
-  #       chgset
-  #     end
-  #   else
-  #     _ -> chgset
-  #   end
-  # end
-
   def validate_clean_atom(%{changes: changes} = chgset, key) do
     with {:ok, value} when is_binary(value) or is_atom(value) <- Map.fetch(changes, key) do
-      put_change(chgset, key, clean_atom(value))
+      put_change(chgset, key, as_key!(value))
     else
       _ -> chgset
     end
