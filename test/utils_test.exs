@@ -3,7 +3,7 @@ defmodule Rivet.Utils.Test do
 
   doctest Rivet.Utils.Callbacks, import: true
   doctest Rivet.Utils.Codes, import: true
-  #doctest Rivet.Utils.Color, import: true
+  # doctest Rivet.Utils.Color, import: true
   doctest Rivet.Utils.Dig, import: true
   doctest Rivet.Utils.Enum, import: true
   doctest Rivet.Utils.List, import: true

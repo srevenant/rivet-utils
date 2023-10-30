@@ -9,8 +9,9 @@ defmodule Rivet.Utils.Cli do
     commands = Keyword.get(opts, :commands)
     opts_args = Keyword.take(opts, [:switches, :aliases])
 
-    with {matched, [cmd | args], []} <- OptionParser.parse(args, opts_args) |> IO.inspect(label: "OPTion"),
-     {:ok, module} <- match_command(cmd, commands) |> IO.inspect(label: "match") do
+    with {matched, [cmd | args], []} <-
+           OptionParser.parse(args, opts_args) |> IO.inspect(label: "OPTion"),
+         {:ok, module} <- match_command(cmd, commands) |> IO.inspect(label: "match") do
       case apply(module, :run, [opts, matched, args]) |> IO.inspect(label: "apply") do
         :ok -> :ok
         other -> die("Invalid result from run (#{module}.run/3): #{inspect(other)}")

@@ -38,7 +38,7 @@ defmodule Rivet.Utils.Redact do
     redact_password(string)
   end
 
-    @doc """
+  @doc """
   iex> obfuscate("")
   ""
   iex> obfuscate("h")
