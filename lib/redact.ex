@@ -37,4 +37,28 @@ defmodule Rivet.Utils.Redact do
     # could add more in future...
     redact_password(string)
   end
+
+    @doc """
+  iex> obfuscate("")
+  ""
+  iex> obfuscate("h")
+  "h"
+  iex> obfuscate("he")
+  "h*"
+  iex> obfuscate("hello")
+  "h***o"
+  iex> obfuscate("hello world")
+  "h*********d"
+  """
+  @spec obfuscate(String.t()) :: String.t()
+  def obfuscate(s) do
+    len = String.length(s)
+    prefix = String.slice(s, 0, 1)
+
+    if len > 4 do
+      prefix <> String.duplicate("*", len - 2) <> String.last(s)
+    else
+      prefix <> String.duplicate("*", max(0, len - 1))
+    end
+  end
 end
