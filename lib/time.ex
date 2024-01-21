@@ -9,15 +9,15 @@ defmodule Rivet.Utils.Time do
   def ifloor(number) when is_float(number), do: Kernel.trunc(number)
   def ifloor(number) when is_integer(number), do: number
 
-  # note for future
-  @doc """
-  iex> utc_offset(:string)
-  "-06:00"
-  iex> utc_offset(:minutes)
-  -360
-  iex> utc_offset(:hour_min)
-  {-6, 0}
-  """
+  # Test only works half the year thanks to daylight saving shift
+  # @doc """
+  # iex> utc_offset(:string)
+  # "-06:00"
+  # iex> utc_offset(:minutes)
+  # -360
+  # iex> utc_offset(:hour_min)
+  # {-6, 0}
+  # """
   def utc_offset(:string) do
     p = fn x -> String.pad_leading("#{x}", 2, "0") end
 
@@ -306,4 +306,109 @@ defmodule Rivet.Utils.Time do
       div(DateTime.to_unix(utc_now) - unix_sunday_midnight, @hour_in_seconds)
     end)
   end
+
+  @doc """
+  Provide the time in a "x hours/mins/seconds/etc" ago type format.
+  Options. Time can be provided as posix epoch (preferred), or DateTime,
+  or NaiveDateTime.
+
+  - `since: time` — compare vs this time instead of "now"
+  - `format: :long | :short(default) | :abbrev`
+      - long format uses no shortened words (minute, second)
+      - short (default) uses 'min' and 'sec' instead of the longer forms
+      - abbrev uses one and two character abbreviations
+  - `space: " "` (default)
+
+  Examples:
+
+  iex> (epoch_time() - 60) |> ago()
+  "1 min"
+
+  iex> (epoch_time() - 11000) |> ago()
+  "3 hours"
+
+  iex> DateTime.from_unix!(epoch_time() - 86400) |> ago(format: :abbrev, space: "")
+  "1d"
+
+  iex> ago(epoch_time() - 300, format: :long)
+  "5 minutes"
+
+  iex> t_start = epoch_time() - 900
+  iex> t_end = epoch_time() - 300
+  iex> ago(t_start, since: t_end, format: :long)
+  "10 minutes"
+  iex> ago(t_end, since: t_start, format: :long)
+  "10 minutes"
+  """
+  @second 0
+  @minute 60
+  @hour @minute * 60
+  @day @hour * 24
+  @week @day * 7
+  @month @day * 30
+  @year @day * 365
+
+  @breaks [@year, @month, @week, @day, @hour, @minute, @second]
+
+  @abbrevs %{
+    :short => %{
+      @second => "sec",
+      @minute => "min",
+      @hour => "hour",
+      @day => "day",
+      @week => "week",
+      @month => "month",
+      @year => "year"
+    },
+    :long => %{
+      @second => "second",
+      @minute => "minute",
+      @hour => "hour",
+      @day => "day",
+      @week => "week",
+      @month => "month",
+      @year => "year"
+    },
+    :abbrev => %{
+      @second => "s",
+      @minute => "m",
+      @hour => "hr",
+      @day => "d",
+      @week => "wk",
+      @month => "mo",
+      @year => "yr"
+    }
+  }
+
+  NaiveDateTime
+  DateTime
+
+  def ago(from_time, opts \\ [])
+  def ago(from_time, opts) when is_integer(from_time) do
+    from_time = as_epoch(from_time)
+    to_time = Keyword.get_lazy(opts, :since, fn -> epoch_time() end) |> as_epoch()
+    space = Keyword.get(opts, :space, " ")
+
+    labels = @abbrevs[Keyword.get(opts, :format, :short)]
+    diff = abs(to_time - from_time)
+
+    case {diff, Enum.find(@breaks, fn x -> diff >= x end)} do
+      {diff, @second} when diff <= 1 -> "seconds"
+      {diff, @second} -> "#{diff}#{space}seconds"
+      {diff, type} -> divtrunc(diff, type, labels[type], space)
+    end
+  end
+  def ago(from_time, opts), do: ago(as_epoch(from_time), opts)
+
+  defp with_s(v, label, space) when v == 1, do: "#{v}#{space}#{label}"
+  defp with_s(v, label, space), do: "#{v}#{space}#{label}s"
+  defp divtrunc(x, y, label, space), do: Integer.floor_div(x, y) |> with_s(label, space)
+
+  @doc """
+  Because posix epoch time is just easier to work with once you understand how
+  it works.
+  """
+  def as_epoch(%DateTime{} = t), do: DateTime.to_unix(t)
+  def as_epoch(%NaiveDateTime{} = t), do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix(t)
+  def as_epoch(x) when is_integer(x), do: x
 end
