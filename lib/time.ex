@@ -384,6 +384,7 @@ defmodule Rivet.Utils.Time do
   DateTime
 
   def ago(from_time, opts \\ [])
+
   def ago(from_time, opts) when is_integer(from_time) do
     from_time = as_epoch(from_time)
     to_time = Keyword.get_lazy(opts, :since, fn -> epoch_time() end) |> as_epoch()
@@ -398,6 +399,7 @@ defmodule Rivet.Utils.Time do
       {diff, type} -> divtrunc(diff, type, labels[type], space)
     end
   end
+
   def ago(from_time, opts), do: ago(as_epoch(from_time), opts)
 
   defp with_s(v, label, space) when v == 1, do: "#{v}#{space}#{label}"
@@ -409,6 +411,9 @@ defmodule Rivet.Utils.Time do
   it works.
   """
   def as_epoch(%DateTime{} = t), do: DateTime.to_unix(t)
-  def as_epoch(%NaiveDateTime{} = t), do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix(t)
+
+  def as_epoch(%NaiveDateTime{} = t),
+    do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix(t)
+
   def as_epoch(x) when is_integer(x), do: x
 end

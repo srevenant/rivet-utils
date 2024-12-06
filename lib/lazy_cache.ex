@@ -16,10 +16,7 @@ defmodule Rivet.Utils.LazyCache do
 
       Returns `{:ok, PID}`.
       """
-      @spec start_link(term()) :: {atom, pid}
-      def start_link(_) do
-        GenServer.start_link(__MODULE__, %{})
-      end
+      def start_link(_), do: GenServer.start_link(__MODULE__, %{})
 
       @doc """
       Store anything for a certain amount of time or forever if no keep alive time specified
@@ -57,30 +54,21 @@ defmodule Rivet.Utils.LazyCache do
 
       Returns a boolean indicating if element has been correctly deleted.
       """
-      @spec delete(atom()) :: boolean()
-      def delete(key) do
-        :ets.delete(@bucket, key)
-      end
+      def delete(key), do: :ets.delete(@bucket, key)
 
       @doc """
       Obtain the number of elements stored in the cache.
 
       Returns an integer equals or bigger than zero.
       """
-      @spec size() :: integer
-      def size() do
-        :ets.select_count(@bucket, [{{:_, :_, :_}, [], [true]}])
-      end
+      def size(), do: :ets.select_count(@bucket, [{{:_, :_, :_}, [], [true]}])
 
       @doc """
       Delete everything in the cache.
 
       Returns a boolean indicating if cache has been correctly cleared.
       """
-      @spec clear() :: boolean
-      def clear() do
-        :ets.delete_all_objects(@bucket)
-      end
+      def clear(), do: :ets.delete_all_objects(@bucket)
 
       defp get_keepalive(keepAliveInMillis) do
         if keepAliveInMillis == :keep_alive_forever do
