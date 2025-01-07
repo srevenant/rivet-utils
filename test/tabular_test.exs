@@ -34,7 +34,7 @@ defmodule Rivet.Utils.TabularTest do
              a | b
              """ = Tabular.tabularize([[i: "a", j: "b"]]) <> "\n"
 
-      assert is_nil(Tabular.tabularize([]))
+      assert "" == Tabular.tabularize([])
     end
   end
 end

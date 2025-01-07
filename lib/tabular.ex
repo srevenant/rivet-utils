@@ -13,7 +13,7 @@ defmodule Rivet.Utils.Tabular do
   Contributor: Jake Wood
   """
 
-  def tabularize([]), do: nil
+  def tabularize([]), do: ""
 
   def tabularize([head | _] = keywords) when is_list(keywords) do
     init = Enum.map(head, fn {key, _} -> String.length(Atom.to_string(key)) end)
