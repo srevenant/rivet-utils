@@ -19,8 +19,8 @@ defmodule Rivet.Utils.Tabular do
     init = Enum.map(head, fn {key, _} -> String.length(Atom.to_string(key)) end)
 
     widths =
-      Enum.reduce(keywords, init, fn counts, row ->
-        Enum.zip_with([counts, row], fn [{_, val}, count] ->
+      Enum.reduce(keywords, init, fn row, counts ->
+        Enum.zip_with([row, counts], fn [{_, val}, count] ->
           Enum.max([String.length("#{val}"), count])
         end)
       end)
@@ -31,7 +31,7 @@ defmodule Rivet.Utils.Tabular do
       end)
 
     subhead = Enum.map(widths, fn width -> {nil, String.duplicate("-", width)} end)
-    table = [header | [subhead | keywords]]
+    table = [header, subhead | keywords]
 
     Enum.map_join(
       table,
