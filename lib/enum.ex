@@ -31,24 +31,28 @@ defmodule Rivet.Utils.Enum do
     end
   end
 
-  # @doc """
-  # sequence helps you know if any item in a list of tuples failed
-  #
-  # iex> vals = [ok: 1, ok: 2, ok: 3]
-  # ...> sequence(vals)
-  # {:ok, [1,2,3]}
-  # iex> vals = [ok: 1, error: "nan", ok: 3]
-  # ...> sequence(vals)
-  # {:error, "nan"}
-  # """
-  # @spec sequence(list(keyword())) :: {:error, any()} | {:ok, list(any())}
-  # def sequence(keywords) do
-  #   keywords
-  #   |> Enum.reverse()
-  #   |> Enum.reduce({:ok, []}, fn
-  #     _, {:error, err} -> {:error, err}
-  #     {:error, err}, _ -> {:error, err}
-  #     {:ok, val}, {:ok, vals} -> {:ok, [val | vals]}
-  #   end)
-  # end
+  @doc """
+  short-circuit map:
+  like regular map but short circuits if an element maps to {:error, err}
+
+  iex> scmap([1,2,3], fn x -> {:ok, x + 1} end)
+  {:ok, [2,3,4]}
+  iex> scmap([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  {:ok, [3,4,6]}
+  iex> scmap([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  {:error, "BAD"}
+
+  """
+  @spec scmap(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
+        when a: term(), b: term(), e: term()
+  def scmap(elems, fxn), do: scmap(elems, [], fxn)
+
+  def scmap([head | tail], results, fxn) do
+    case fxn.(head) do
+      {:ok, result} -> scmap(tail, [result | results], fxn)
+      {:error, err} -> {:error, err}
+    end
+  end
+
+  def scmap([], results, _), do: {:ok, Enum.reverse(results)}
 end
