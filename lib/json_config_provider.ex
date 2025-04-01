@@ -118,7 +118,7 @@ defmodule Rivet.Utils.JsonConfigProvider do
   def keyword_pair("${" <> key_name, v_default) do
     case String.at(key_name, String.length(key_name) - 1) do
       "}" ->
-        String.slice(key_name, 0..-2)
+        String.slice(key_name, 0..-2//-1)
 
       _ ->
         raise "Invalid environment key `${#{key_name}`"
