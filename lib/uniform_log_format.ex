@@ -44,8 +44,8 @@ defmodule Rivet.Utils.UniformLogFormat do
   " key=42"
   iex> format_meta([key: 42, file: "narf"], :debug)
   [
-   [' ', "key", 61, "42"],
-   [' ', "file", 61, "narf"]
+   [~c" ", "key", 61, "42"],
+   [~c" ", "file", 61, "narf"]
   ]
   """
   def format_meta(meta, level), do: filter_meta([], meta, level) |> Enum.reverse()
@@ -64,15 +64,15 @@ defmodule Rivet.Utils.UniformLogFormat do
 
   iex> format_msg([key: 10, a: 5, other: 20], %{}) |> IO.iodata_to_binary()
   " key=10 a=5 other=20"
-  iex> format_msg('a charlist', %{})
-  [' ', "a charlist"]
+  iex> format_msg(~c"a charlist", %{})
+  [~c" ", "a charlist"]
   iex> format_msg("a string", %{})
-  [' ', "a string"]
+  [~c" ", "a string"]
   iex> format_msg({:tuple}, %{})
-  [' ', "data=", "{:tuple}"]
+  [~c" ", "data=", "{:tuple}"]
 
   #iex> format_msg({:tuple}, %{report_cb: fn x -> inspect(x) end})
-  #[' ', "{:tuple}"]
+  #[~c" ", "{:tuple}"]
   """
   def format_msg([], _), do: []
 

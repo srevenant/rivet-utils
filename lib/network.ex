@@ -11,7 +11,7 @@ defmodule Rivet.Utils.Network do
   {:error, :nxdomain}
   iex> lookup_address(10)
   {:error, :einval}
-  iex> lookup_address('localhost')
+  iex> lookup_address(~c"localhost")
   {:ok, {127,0,0,1}}
   iex> lookup_address("localhost")
   {:ok, {127,0,0,1}}

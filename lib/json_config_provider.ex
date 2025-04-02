@@ -101,24 +101,27 @@ defmodule Rivet.Utils.JsonConfigProvider do
   defp to_keyword2(term), do: term
 
   ##############################################################################
-  ## On exit handler throws error that it can't remove the json file; for now
-  ## leave commented out unless we need to make a change.
-  # @doc """
-  # iex> keyword_pair("doctor", "who")
-  # {:doctor, "who"}
-  # iex> keyword_pair("$DOCTOR:doctor", "who")
-  # {:doctor, "who"}
-  # iex> keyword_pair("$DOCTOR_TEST_ENV", "who")
-  # {:DOCTOR_TEST_ENV, "who"}
-  # iex> System.put_env("DOCTOR_TEST_ENV", "WHO")
-  # iex> keyword_pair("$DOCTOR_TEST_ENV:doctor", "who")
-  # {:doctor, "WHO"}
-  # iex> keyword_pair("${DOCTOR_TEST_ENV", "WHO")
-  # """
+  # On exit handler throws error that it can't remove the json file; for now
+  # leave commented out unless we need to make a change.
+  @doc """
+  iex> keyword_pair("doctor", "who")
+  {:doctor, "who"}
+  iex> keyword_pair("$DOCTOR:doctor", "who")
+  {:doctor, "who"}
+  iex> keyword_pair("$DOCTOR_TEST_ENV", "who")
+  {:DOCTOR_TEST_ENV, "who"}
+  iex> System.put_env("DOCTOR_TEST_ENV", "WHO")
+  iex> keyword_pair("$DOCTOR_TEST_ENV:doctor", "who")
+  {:doctor, "WHO"}
+  iex> keyword_pair("${DOCTOR_TEST_ENV}", "who")
+  {:DOCTOR_TEST_ENV, "WHO"}
+  iex> keyword_pair("${DOCTOR_TEST_ENV", "WHO")
+  ** (RuntimeError) Invalid environment key `${DOCTOR_TEST_ENV`
+  """
   def keyword_pair("${" <> key_name, v_default) do
-    case String.at(key_name, String.length(key_name) - 1) do
+    case String.at(key_name, -1) do
       "}" ->
-        String.slice(key_name, 0..-2)
+        String.slice(key_name, 0..-2//1)
 
       _ ->
         raise "Invalid environment key `${#{key_name}`"
