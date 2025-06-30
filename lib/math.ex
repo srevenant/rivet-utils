@@ -31,4 +31,23 @@ defmodule Rivet.Utils.Math do
   end
 
   def deviation(value, mean), do: Float.pow(value - mean, 2)
+
+  @doc """
+  iex> ranges_overlap?(0, 2, 1, 3)
+  true
+  iex> ranges_overlap?(-3, 10, 1, 4)
+  true
+  iex> ranges_overlap?(5, 6, 3, 7)
+  true
+  iex> ranges_overlap?(3, 10, 1, 4)
+  true
+  iex> ranges_overlap?(-1, 1, 1, 2)
+  false
+  iex> ranges_overlap?(10, 11, 8, 10)
+  false
+  iex> ranges_overlap?(1, 2, 1, 2)
+  true
+  """
+  @spec ranges_overlap?(number(), number(), number(), number()) :: boolean()
+  def ranges_overlap?(a1, a2, b1, b2), do: max(a1, b1) < min(a2, b2)
 end
