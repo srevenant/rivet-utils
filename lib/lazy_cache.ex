@@ -93,17 +93,22 @@ defmodule Rivet.Utils.LazyCache do
       end
 
       @impl true
-
-      # TODO: add a :status to the state
       def init(state) do
-        # TODO: switch init to a handle_continue
-        # Create table
         :ets.new(@bucket, [:set, :public, :named_table])
+        {:ok, state, {:continue, :init_async}}
+      end
 
-        # once a minute is fine. we're lazy right?
-        :timer.apply_interval(60_000, __MODULE__, :purge_cache, [])
+      @impl GenServer
+      @wait_purge 60_000
+      def handle_continue(:init_async, state) do
+        # this is all to randomly distribute the cleanups and reduce spikes
+        # if there are a lot of caches
+        delay = :rand.uniform(trunc(@wait_purge * 0.95))
+        Process.sleep(delay)
 
-        {:ok, state}
+        :timer.apply_interval(@wait_purge, __MODULE__, :purge_cache, [])
+
+        {:noreply, state}
       end
     end
   end
