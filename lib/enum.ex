@@ -55,4 +55,19 @@ defmodule Rivet.Utils.Enum do
   end
 
   def scmap([], results, _), do: {:ok, Enum.reverse(results)}
+
+  @doc """
+  iex> pairs([])
+  []
+  iex> pairs(["a"])
+  []
+  iex> pairs([:a, :b])
+  [{:a, :b}]
+  iex> pairs([:a, :b])
+  [{:a, :b}]
+  iex> pairs([1,2,3])
+  [{1, 2}, {1, 3}, {2, 3}]
+  """
+  def pairs([]), do: []
+  def pairs([h | t]), do: Enum.map(t, fn v -> {h, v} end) ++ pairs(t)
 end
