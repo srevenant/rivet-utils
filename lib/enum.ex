@@ -63,10 +63,10 @@ defmodule Rivet.Utils.Enum do
   []
   iex> pairs([:a, :b])
   [{:a, :b}]
-  iex> pairs([:a, :b])
-  [{:a, :b}]
   iex> pairs([1,2,3])
   [{1, 2}, {1, 3}, {2, 3}]
+  iex> pairs([:w, :x, :y, :z])
+  [{:w, :x}, {:w, :y}, {:w, :z}, {:x, :y}, {:x, :z}, {:y, :z}]
   """
   def pairs([]), do: []
   def pairs([h | t]), do: Enum.map(t, fn v -> {h, v} end) ++ pairs(t)
