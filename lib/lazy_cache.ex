@@ -3,6 +3,9 @@ defmodule Rivet.Utils.LazyCache do
   Originally lazy_cache @ https://hex.pm/packages/lazy_cache; but with updates.
   """
 
+  @callback get(key :: any()) :: {:ok, any()} | {:error, :not_found}
+  @optional_callbacks [get: 1]
+
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       @bucket String.to_atom("#{__MODULE__}.BUCKET")
@@ -58,6 +61,8 @@ defmodule Rivet.Utils.LazyCache do
           _ -> {:error, :not_found}
         end
       end
+
+      defoverridable get: 1
 
       @doc """
       Delete anything by its key.
