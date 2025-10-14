@@ -50,6 +50,16 @@ defmodule Rivet.Utils.LazyCache do
       end
 
       @doc """
+      Take out the superstructure and just return the value in an idiomatic pattern
+      """
+      def get(id) do
+        case lookup(id) do
+          [{_, val, _}] -> {:ok, val}
+          _ -> {:error, :not_found}
+        end
+      end
+
+      @doc """
       Delete anything by its key.
 
       Returns a boolean indicating if element has been correctly deleted.
