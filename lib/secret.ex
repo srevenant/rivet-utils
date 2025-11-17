@@ -51,7 +51,8 @@ defmodule Rivet.Utils.Secret do
 
           with {:ok, data} <- fetch_change(chgset, field),
                {:ok, enc} <- Rivet.Utils.Secret.encrypt(type, data) do
-            put_change(chgset, secret_field, enc)
+            data = Rivet.Utils.Secret.and_armor?(chgset, enc)
+            put_change(chgset, secret_field, data)
           else
             :error ->
               # Field isn't set, don't encrypt.
@@ -141,5 +142,19 @@ defmodule Rivet.Utils.Secret do
 
   def dearmor(ascii) do
     Base.decode64(ascii)
+  end
+
+  @doc """
+  Conditionally armors the encrypted secret as ASCII when stored in an
+  embedded schema. Embedded schema do not have a metadata field, while
+  regular table-backed schema do. Embedded schema are typically stored as
+  JSON, which does not deal well with raw bytes.
+  """
+  def and_armor?(%{__meta__ => _}, raw_secret) do
+    raw_secret
+  end
+
+  def and_armor?(_, raw_secret) do
+    armor(raw_secret)
   end
 end
