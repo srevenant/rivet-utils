@@ -47,9 +47,12 @@ defmodule Rivet.Utils.Secret do
         fields = unquote(fields)
 
         Enum.reduce(fields, chgset, fn field, chgset ->
-          secret_field = String.to_existing_atom("#{field}_secret")
+          secret_field = String.to_atom("#{field}_secret")
 
-          with {:ok, data} <- fetch_change(chgset, field),
+          # Assocs and embeds don't have a secret field on the parent, so
+          # skip encrypting in that case.
+          with {_, _} <- fetch_field(chgset, secret_field),
+               {:ok, data} <- fetch_change(chgset, field),
                {:ok, enc} <- Rivet.Utils.Secret.encrypt(type, data) do
             data = Rivet.Utils.Secret.and_armor?(chgset, enc)
             put_change(chgset, secret_field, data)
@@ -73,14 +76,14 @@ defmodule Rivet.Utils.Secret do
               %{item | field => mod.unseal(assoc)}
 
             _ ->
-              secret_field = String.to_existing_atom("#{field}_secret")
+              secret_field = String.to_atom("#{field}_secret")
 
-              with encrypted <- Map.fetch!(item, secret_field),
+              with {:ok, encrypted} <- Map.fetch(item, secret_field),
                    {:ok, enc} <- Rivet.Utils.Secret.should_dearmor?(item, encrypted),
                    {:ok, plain} <- Rivet.Utils.Secret.decrypt(type, enc) do
                 Map.put(item, field, plain)
               else
-                {:error, _} ->
+                _ ->
                   item
               end
           end
@@ -166,10 +169,10 @@ defmodule Rivet.Utils.Secret do
   end
 
   def should_dearmor?(%{__meta__: _}, encrypted) do
-    dearmor(encrypted)
+    {:ok, encrypted}
   end
 
   def should_dearmor?(_, encrypted) do
-    {:ok, encrypted}
+    dearmor(encrypted)
   end
 end
