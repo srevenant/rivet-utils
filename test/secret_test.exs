@@ -1,6 +1,7 @@
 defmodule Rivet.Utils.SecretTest do
   use ExUnit.Case, async: true
 
+  import Ecto.Changeset
   alias Rivet.Utils.Secret
 
   test "no encryption" do
@@ -23,10 +24,14 @@ defmodule Rivet.Utils.SecretTest do
     assert {:ok, enc} = Secret.encrypt(:nacl, "Super secret password", enc_opts)
     assert {:ok, "Super secret password"} == Secret.decrypt(:nacl, enc, dec_opts)
 
-    Application.put_env(:core, :encryption_keys, dec_opts)
+    Application.put_env(:core, :encryption_keys, %{
+      public_key: Base.encode64(pub),
+      secret_key: Base.encode64(sec)
+    })
+
     assert {:ok, "Super secret password"} == Secret.decrypt(:nacl, enc)
 
-    Applicaton.delete_env(:core, :encryption_keys)
+    Application.delete_env(:core, :encryption_keys)
   end
 
   test "armoring" do
@@ -49,5 +54,29 @@ defmodule Rivet.Utils.SecretTest do
       # Covers the default values of `:type` and `:fields`.
       use Rivet.Utils.Secret
     end
+  end
+
+  test "embedded secrets" do
+    %{public: pub, secret: sec} = :enacl.box_keypair()
+
+    Application.put_env(:core, :encryption_keys, %{
+      public_key: Base.encode64(pub),
+      secret_key: Base.encode64(sec)
+    })
+
+    enigma =
+      cast(%Enigma{}, %{hidden: "sekret"}, [:hidden])
+      |> Enigma.validate_post()
+      |> apply_action!(:build)
+
+    assert enigma.hidden_secret != "sekret"
+    refute is_nil(enigma.hidden_secret)
+
+    mystery = %Mystery{
+      enigma: enigma
+    }
+
+    revealed = Mystery.unseal(mystery)
+    assert revealed.enigma.hidden == "sekret"
   end
 end

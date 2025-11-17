@@ -6,6 +6,7 @@ defmodule Rivet.Utils.MixProject do
       app: :rivet_utils,
       version: "2.1.0",
       elixir: "~> 1.14",
+      elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
       docs: [main: "Rivet.Utils"],
@@ -29,6 +30,10 @@ defmodule Rivet.Utils.MixProject do
   def application do
     [extra_applications: [:logger]]
   end
+
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do

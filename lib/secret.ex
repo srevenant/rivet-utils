@@ -37,7 +37,7 @@ defmodule Rivet.Utils.Secret do
     type = opts[:type] || :nacl
     fields = opts[:fields] || []
 
-    quote do
+    quote location: :keep do
       # Encrypts `data` according to `type` before saving, even if neither changed,
       # as this may be a re-key operation based on information in
       # Application.get_env, etc. If the encrypted data doesn't actually change,
@@ -68,14 +68,21 @@ defmodule Rivet.Utils.Secret do
         type = unquote(type)
 
         Enum.reduce(fields, item, fn field, item ->
-          secret_field = String.to_existing_atom("#{field}_secret")
+          case Map.fetch(item, field) do
+            {:ok, %mod{} = assoc} ->
+              %{item | field => mod.unseal(assoc)}
 
-          case Rivet.Utils.Secret.decrypt(type, Map.fetch!(item, secret_field)) do
-            {:ok, plain} ->
-              Map.put(item, field, plain)
+            _ ->
+              secret_field = String.to_existing_atom("#{field}_secret")
 
-            {:error, _} ->
-              item
+              with encrypted <- Map.fetch!(item, secret_field),
+                   {:ok, enc} <- Rivet.Utils.Secret.should_dearmor?(item, encrypted),
+                   {:ok, plain} <- Rivet.Utils.Secret.decrypt(type, enc) do
+                Map.put(item, field, plain)
+              else
+                {:error, _} ->
+                  item
+              end
           end
         end)
       end
@@ -150,11 +157,19 @@ defmodule Rivet.Utils.Secret do
   regular table-backed schema do. Embedded schema are typically stored as
   JSON, which does not deal well with raw bytes.
   """
-  def and_armor?(%{__meta__ => _}, raw_secret) do
+  def and_armor?(%{__meta__: _}, raw_secret) do
     raw_secret
   end
 
   def and_armor?(_, raw_secret) do
     armor(raw_secret)
+  end
+
+  def should_dearmor?(%{__meta__: _}, encrypted) do
+    dearmor(encrypted)
+  end
+
+  def should_dearmor?(_, encrypted) do
+    {:ok, encrypted}
   end
 end
