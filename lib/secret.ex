@@ -157,7 +157,7 @@ defmodule Rivet.Utils.Secret do
   regular table-backed schema do. Embedded schema are typically stored as
   JSON, which does not deal well with raw bytes.
   """
-  def and_armor?(%{__meta__: _}, raw_secret) do
+  def and_armor?(%{data: %{__meta__: _}}, raw_secret) do
     raw_secret
   end
 
