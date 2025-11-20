@@ -380,9 +380,6 @@ defmodule Rivet.Utils.Time do
     }
   }
 
-  NaiveDateTime
-  DateTime
-
   def ago(from_time, opts \\ [])
 
   def ago(from_time, opts) when is_integer(from_time) do
