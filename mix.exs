@@ -42,7 +42,7 @@ defmodule Rivet.Utils.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ecto, "~> 3.7"},
-      {:enacl, "~> 1.2"},
+      {:enacl, "~> 1.2", git: "https://github.com/PreVeil/enacl.git", ref: "0eb12e3d4bdc8dec321d9d22f47790dc9ae9af7b"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.0"},
