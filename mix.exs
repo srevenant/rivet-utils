@@ -4,8 +4,8 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.2.0",
-      elixir: "~> 1.14",
+      version: "2.3.0",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
@@ -41,7 +41,7 @@ defmodule Rivet.Utils.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:ecto, "~> 3.7"},
+      {:ecto, "~> 3.13"},
       {:enacl, "~> 1.2", repo: "cato"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
