@@ -13,7 +13,7 @@ defmodule Rivet.Utils.UniformLogFormat do
   @spec format(
           level :: Logger.level(),
           message :: Logger.message(),
-          timestamp :: Formatter.time(),
+          timestamp :: any(),
           metadata :: Keyword.t()
         ) :: IO.chardata()
   def format(level, msg, timestamp, meta) do
@@ -30,6 +30,7 @@ defmodule Rivet.Utils.UniformLogFormat do
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   @doc """
+  ```
   iex> format_meta([a: 1, line: 10, b: 2, level: :info, c: 3], :info) |> IO.iodata_to_binary()
   " a=1 b=2 c=3"
   iex> format_meta([key: 10, line: 20, level: :debug], :info) |> IO.iodata_to_binary()
@@ -47,21 +48,27 @@ defmodule Rivet.Utils.UniformLogFormat do
    [~c" ", "key", 61, "42"],
    [~c" ", "file", 61, "narf"]
   ]
+  ```
   """
   def format_meta(meta, level), do: filter_meta([], meta, level) |> Enum.reverse()
 
   # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
   @doc """
+  ```
   iex> format_msg([], %{})
   []
+  ```
 
   Dicts end up being alphabetic keys due to their nature:
 
+  ```
   iex> format_msg(%{key: 10, other: 20, a: 5}, %{}) |> IO.iodata_to_binary()
   " other=20 a=5 key=10"
+  ```
 
   Keyword lists will stay in-order:
 
+  ```
   iex> format_msg([key: 10, a: 5, other: 20], %{}) |> IO.iodata_to_binary()
   " key=10 a=5 other=20"
   iex> format_msg(~c"a charlist", %{})
@@ -70,9 +77,7 @@ defmodule Rivet.Utils.UniformLogFormat do
   [~c" ", "a string"]
   iex> format_msg({:tuple}, %{})
   [~c" ", "data=", "{:tuple}"]
-
-  #iex> format_msg({:tuple}, %{report_cb: fn x -> inspect(x) end})
-  #[~c" ", "{:tuple}"]
+  ```
   """
   def format_msg([], _), do: []
 

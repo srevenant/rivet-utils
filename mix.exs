@@ -4,8 +4,8 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.2.0",
-      elixir: "~> 1.14",
+      version: "2.3.0",
+      elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
@@ -20,29 +20,24 @@ defmodule Rivet.Utils.MixProject do
         "coveralls.html": :test
       ],
       dialyzer: [
-        # ignore_warnings: ".dialyzer_ignore.exs",
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [extra_applications: [:logger]]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:ecto, "~> 3.7"},
-      {:enacl, "~> 1.2", git: "https://github.com/PreVeil/enacl.git", ref: "0eb12e3d4bdc8dec321d9d22f47790dc9ae9af7b"},
+      {:ecto, "~> 3.13"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.0"},

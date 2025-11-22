@@ -7,6 +7,7 @@ defmodule Rivet.Utils.Enum do
   like Enum.find_value() on a list of [{rx, fn}, ..], calling fn on the matched
   rx and returning the result.
 
+  ```
   iex> opts = [
   ...>   {~r/^(\\d+)\\s*(m|min(s)?|minute(s)?)$/, fn match, _ -> {:min, match} end},
   ...>   {~r/^(\\d+)\\s*(h|hour(s)?|hr(s)?)$/, fn match, _ -> {:hr, match} end},
@@ -15,6 +16,7 @@ defmodule Rivet.Utils.Enum do
   {:min, ["30 m", "30", "m"]}
   iex> enum_rx(opts, "1.5 hr") # doesn't match because of the period
   nil
+  ```
   """
   def enum_rx([], _str), do: nil
 
@@ -35,12 +37,14 @@ defmodule Rivet.Utils.Enum do
   short-circuit map:
   like regular map but short circuits if an element maps to {:error, err}
 
+  ```
   iex> scmap([1,2,3], fn x -> {:ok, x + 1} end)
   {:ok, [2,3,4]}
   iex> scmap([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:ok, [3,4,6]}
   iex> scmap([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:error, "BAD"}
+  ```
 
   """
   @spec scmap(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
