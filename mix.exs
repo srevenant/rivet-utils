@@ -20,22 +20,18 @@ defmodule Rivet.Utils.MixProject do
         "coveralls.html": :test
       ],
       dialyzer: [
-        # ignore_warnings: ".dialyzer_ignore.exs",
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ]
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [extra_applications: [:logger]]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},

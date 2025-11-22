@@ -104,6 +104,7 @@ defmodule Rivet.Utils.JsonConfigProvider do
   # On exit handler throws error that it can't remove the json file; for now
   # leave commented out unless we need to make a change.
   @doc """
+  ```
   iex> keyword_pair("doctor", "who")
   {:doctor, "who"}
   iex> keyword_pair("$DOCTOR:doctor", "who")
@@ -117,6 +118,7 @@ defmodule Rivet.Utils.JsonConfigProvider do
   {:DOCTOR_TEST_ENV, "WHO"}
   iex> keyword_pair("${DOCTOR_TEST_ENV", "WHO")
   ** (RuntimeError) Invalid environment key `${DOCTOR_TEST_ENV`
+  ```
   """
   def keyword_pair("${" <> key_name, v_default) do
     case String.at(key_name, -1) do
