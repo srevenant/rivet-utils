@@ -90,7 +90,7 @@ defmodule Rivet.Utils.Secret do
 
   def encrypt(:nacl, plain, opts) do
     with %{public_key: pk} <- nacl_encryption_keys(opts) do
-      {:ok, :enacl.box_seal(plain, pk)}
+      {:ok, Zodium.box_seal(plain, pk)}
     else
       _ ->
         {:error, :bad_key}
@@ -108,7 +108,7 @@ defmodule Rivet.Utils.Secret do
 
   def decrypt(:nacl, ciphered, opts) do
     with %{public_key: pk, secret_key: sk} <- nacl_encryption_keys(opts) do
-      :enacl.box_seal_open(ciphered, pk, sk)
+      Zodium.box_seal_open(ciphered, pk, sk)
     else
       _ ->
         {:error, :bad_key}

@@ -16,7 +16,7 @@ defmodule Rivet.Utils.SecretTest do
   end
 
   test "encryption options" do
-    %{public: pub, secret: sec} = :enacl.box_keypair()
+    %{public: pub, secret: sec} = Zodium.box_keypair()
     dec_opts = %{public_key: pub, secret_key: sec}
     enc_opts = %{public_key: pub}
 

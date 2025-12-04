@@ -37,13 +37,13 @@ defmodule Rivet.Utils.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
       {:ecto, "~> 3.7"},
-      {:enacl, "~> 1.2", repo: "cato"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:jason, "~> 1.0"},
       {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
       {:puid, "~> 2.0"},
-      {:transmogrify, "~> 2.0.2"}
+      {:transmogrify, "~> 2.0.2"},
+      {:zodium, "~> 0.1.0", git: "/home/lyle/projects/cato/zodium"}
     ]
   end
 
