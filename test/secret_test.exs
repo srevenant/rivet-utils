@@ -23,10 +23,10 @@ defmodule Rivet.Utils.SecretTest do
     assert {:ok, enc} = Secret.encrypt(:nacl, "Super secret password", enc_opts)
     assert {:ok, "Super secret password"} == Secret.decrypt(:nacl, enc, dec_opts)
 
-    Application.put_env(:core, :encryption_keys, dec_opts)
+    Application.put_env(:core, :encryption_keys, Map.new(dec_opts, fn {k, v} -> {k, Base.encode64(v)} end))
     assert {:ok, "Super secret password"} == Secret.decrypt(:nacl, enc)
 
-    Applicaton.delete_env(:core, :encryption_keys)
+    Application.delete_env(:core, :encryption_keys)
   end
 
   test "armoring" do
@@ -37,7 +37,7 @@ defmodule Rivet.Utils.SecretTest do
     assert {:ok, <<100, 125, 150, 175, 200>>} == Secret.dearmor("ZH2Wr8g=")
   end
 
-  test "__using__ args" do
+    test "__using__ args" do
     # It's shocking this works.
     defmodule NotSecret do
       use Ecto.Schema
