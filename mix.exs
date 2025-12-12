@@ -43,7 +43,7 @@ defmodule Rivet.Utils.MixProject do
       {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
       {:puid, "~> 2.0"},
       {:transmogrify, "~> 2.0.2"},
-      {:zodium, "~> 0.1.0", git: "/home/lyle/projects/cato/zodium"}
+      {:zodium, "~> 0.1.0", git: "/home/lyle/projects/cato/zodium", branch: "latest"}
     ]
   end
 
