@@ -46,6 +46,8 @@ defmodule Rivet.Utils.Enum do
   ```
 
   """
+  @spec ok_map(list(a), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
+        when a: term(), b: term(), e: term()
   @spec ok_map(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
         when a: term(), b: term(), e: term()
   def ok_map(elems, fxn), do: ok_map(elems, [], fxn)

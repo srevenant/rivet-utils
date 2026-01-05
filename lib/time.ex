@@ -410,7 +410,7 @@ defmodule Rivet.Utils.Time do
   def as_epoch(%DateTime{} = t), do: DateTime.to_unix(t)
 
   def as_epoch(%NaiveDateTime{} = t),
-    do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix(t)
+    do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix()
 
   def as_epoch(x) when is_integer(x), do: x
 end
