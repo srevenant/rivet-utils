@@ -34,29 +34,44 @@ defmodule Rivet.Utils.Enum do
   end
 
   @doc """
-  short-circuit map:
-  like regular map but short circuits if an element maps to {:error, err}
-
+  ok_map maps then aggregates [{:ok, result1}, {:ok, result2}, ...] into {:ok, results}
+  ok_map short circuits if an element maps to {:error, err}
   ```
-  iex> scmap([1,2,3], fn x -> {:ok, x + 1} end)
+  iex> ok_map([1,2,3], fn x -> {:ok, x + 1} end)
   {:ok, [2,3,4]}
-  iex> scmap([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  iex> ok_map([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:ok, [3,4,6]}
-  iex> scmap([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  iex> ok_map([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:error, "BAD"}
   ```
 
   """
-  @spec scmap(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
+  @spec ok_map(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
         when a: term(), b: term(), e: term()
-  def scmap(elems, fxn), do: scmap(elems, [], fxn)
+  def ok_map(elems, fxn), do: ok_map(elems, [], fxn)
 
-  def scmap([head | tail], results, fxn) do
+  def ok_map([head | tail], results, fxn) do
     case fxn.(head) do
-      {:ok, result} -> scmap(tail, [result | results], fxn)
+      {:ok, result} -> ok_map(tail, [result | results], fxn)
       {:error, err} -> {:error, err}
     end
   end
 
-  def scmap([], results, _), do: {:ok, Enum.reverse(results)}
+  def ok_map([], results, _), do: {:ok, Enum.reverse(results)}
+
+  @doc """
+  ```
+  iex> ok_flat_map([1,2,3], fn x -> {:ok, [x + 1]} end)
+  {:ok, [2,3,4]}
+  iex> ok_flat_map([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
+  {:ok, [3,4,6]}
+  iex> ok_flat_map([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
+  {:error, "BAD"}
+  ```
+  """
+  def ok_flat_map(a, b),
+    do: with({:ok, results} <- ok_map(a, b), do: {:ok, List.flatten(results)})
+
+  @deprecated "Use ok_map/2 instead"
+  def scmap(a, b), do: ok_map(a, b)
 end
