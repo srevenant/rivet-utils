@@ -413,4 +413,23 @@ defmodule Rivet.Utils.Time do
     do: DateTime.from_naive!(t, "Etc/UTC") |> DateTime.to_unix(t)
 
   def as_epoch(x) when is_integer(x), do: x
+
+  @doc """
+  iex> new_utc_date(2020, 5, 3)
+  {:ok, ~U[2020-05-03 00:00:00Z]}
+  iex> new_utc_date(1999, 12)
+  {:ok, ~U[1999-12-01 00:00:00Z]}
+  iex> new_utc_date(1999, 13)
+  {:error, :invalid_date}
+  iex> new_utc_date(1999, 12, 32)
+  {:error, :invalid_date}
+  iex> new_utc_date(2020, 2, 31)
+  {:error, :invalid_date}
+  """
+  def new_utc_date(year, month, day \\ 1) do
+    with {:ok, date} <- Date.new(year, month, day),
+         {:ok, time} <- Time.new(0, 0, 0) do
+      DateTime.new(date, time, "Etc/UTC")
+    end
+  end
 end
