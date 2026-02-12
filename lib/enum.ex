@@ -71,6 +71,12 @@ defmodule Rivet.Utils.Enum do
   {:error, "BAD"}
   ```
   """
+  @spec flat_map_while_ok(list(a), (a -> {:ok, list(b)} | {:error, e})) ::
+          {:error, e} | {:ok, list(b)}
+        when a: term(), b: term(), e: term()
+  @spec flat_map_while_ok(list(a), list(b), (a -> {:ok, list(b)} | {:error, e})) ::
+          {:error, e} | {:ok, list(b)}
+        when a: term(), b: term(), e: term()
   def flat_map_while_ok(elems, fxn), do: flat_map_while_ok(elems, [], fxn)
 
   def flat_map_while_ok([next | tail], acc, fxn) do
@@ -80,6 +86,7 @@ defmodule Rivet.Utils.Enum do
 
   def flat_map_while_ok([], results, _), do: {:ok, Enum.reverse(results)}
 
+  @spec reverse_concat(list(a), list(a)) :: list(a) when a: term()
   defp reverse_concat([head | tail], list), do: reverse_concat(tail, [head | list])
   defp reverse_concat([], list), do: list
 
@@ -91,6 +98,8 @@ defmodule Rivet.Utils.Enum do
   {:error, :out_of_bounds}
   ```
   """
+  @spec reduce_while_ok(list(a), b, (a, b -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, b}
+        when a: term(), b: term(), e: term()
   def reduce_while_ok([next | tail], acc, fxn) do
     with {:ok, acc} <- fxn.(next, acc), do: reduce_while_ok(tail, acc, fxn)
   end
