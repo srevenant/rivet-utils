@@ -34,46 +34,75 @@ defmodule Rivet.Utils.Enum do
   end
 
   @doc """
-  ok_map maps then aggregates [{:ok, result1}, {:ok, result2}, ...] into {:ok, results}
-  ok_map short circuits if an element maps to {:error, err}
+  map_while_ok maps then aggregates [{:ok, result1}, {:ok, result2}, ...] into {:ok, results}
+  map_while_ok short circuits if an element maps to {:error, err}
   ```
-  iex> ok_map([1,2,3], fn x -> {:ok, x + 1} end)
+  iex> map_while_ok([1,2,3], fn x -> {:ok, x + 1} end)
   {:ok, [2,3,4]}
-  iex> ok_map([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  iex> map_while_ok([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:ok, [3,4,6]}
-  iex> ok_map([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  iex> map_while_ok([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:error, "BAD"}
   ```
-
   """
-  @spec ok_map(list(a), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
+  @spec map_while_ok(list(a), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
         when a: term(), b: term(), e: term()
-  @spec ok_map(list(a), list(b), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
+  @spec map_while_ok(list(a), list(b), (a -> {:ok, b} | {:error, e})) ::
+          {:error, e} | {:ok, list(b)}
         when a: term(), b: term(), e: term()
-  def ok_map(elems, fxn), do: ok_map(elems, [], fxn)
+  def map_while_ok(elems, fxn), do: map_while_ok(elems, [], fxn)
 
-  def ok_map([head | tail], results, fxn) do
-    case fxn.(head) do
-      {:ok, result} -> ok_map(tail, [result | results], fxn)
-      {:error, err} -> {:error, err}
-    end
+  def map_while_ok([next | tail], results, fxn) do
+    with {:ok, result} <- fxn.(next),
+         do: map_while_ok(tail, [result | results], fxn)
   end
 
-  def ok_map([], results, _), do: {:ok, Enum.reverse(results)}
+  def map_while_ok([], results, _), do: {:ok, Enum.reverse(results)}
 
   @doc """
   ```
-  iex> ok_flat_map([1,2,3], fn x -> {:ok, [x + 1]} end)
+  iex> flat_map_while_ok([1,2,3], fn x -> {:ok, [x + 1]} end)
   {:ok, [2,3,4]}
-  iex> ok_flat_map([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
+  iex> flat_map_while_ok([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
   {:ok, [3,4,6]}
-  iex> ok_flat_map([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
+  iex> flat_map_while_ok(["i", "i", "o"], fn x -> {:ok, ["e", x]} end)
+  {:ok, ["e", "i", "e", "i", "e", "o"]}
+  iex> flat_map_while_ok([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
   {:error, "BAD"}
   ```
   """
-  def ok_flat_map(a, b),
-    do: with({:ok, results} <- ok_map(a, b), do: {:ok, List.flatten(results)})
+  def flat_map_while_ok(elems, fxn), do: flat_map_while_ok(elems, [], fxn)
 
-  @deprecated "Use ok_map/2 instead"
-  def scmap(a, b), do: ok_map(a, b)
+  def flat_map_while_ok([next | tail], acc, fxn) do
+    with {:ok, results} <- fxn.(next),
+         do: flat_map_while_ok(tail, reverse_concat(results, acc), fxn)
+  end
+
+  def flat_map_while_ok([], results, _), do: {:ok, Enum.reverse(results)}
+
+  defp reverse_concat([head | tail], list), do: reverse_concat(tail, [head | list])
+  defp reverse_concat([], list), do: list
+
+  @doc """
+  ```
+  iex> reduce_while_ok([1,2,3], 0, fn x, acc -> {:ok, x + acc} end)
+  {:ok, 6}
+  iex> reduce_while_ok([1,2,-1,3], 0, fn -1, _ -> {:error, :out_of_bounds}; x, acc -> {:ok, x + acc};  end)
+  {:error, :out_of_bounds}
+  ```
+  """
+  def reduce_while_ok([next | tail], acc, fxn) do
+    with {:ok, acc} <- fxn.(next, acc), do: reduce_while_ok(tail, acc, fxn)
+  end
+
+  def reduce_while_ok([], acc, _), do: {:ok, acc}
+
+  @deprecated "Use map_while_ok/2 instead"
+  def scmap(a, b), do: map_while_ok(a, b)
+
+  @deprecated "Use map_while_ok/2 instead"
+  def ok_map(a, b), do: map_while_ok(a, b)
+
+  @deprecated "Use flat_map_while_ok/2 instead"
+  def ok_flat_map(a, b), do: flat_map_while_ok(a, b)
 end
