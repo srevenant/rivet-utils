@@ -1,89 +1,99 @@
-defmodule Rivet.Utils.Test.TestCache do
-  use Rivet.Utils.LazyCache, bucket_key: :test_bucket
-end
 
 defmodule Rivet.Utils.LazyCacheTest do
   use ExUnit.Case
   alias Rivet.Utils.Test.TestCache
 
-  setup_all do
-    {:ok, _} = start_supervised(TestCache, restart: :temporary)
-    %{}
+  defmodule TestCache do
+    use Rivet.Utils.LazyCache, expires: 500, wait_prune: 25
   end
 
-  def keep_alive_error() do
-    "Keep Alive Time is not valid. Should be a positive Integer or :keep_alive_forever."
-  end
-
-  test "should insert element in cache" do
-    assert TestCache.insert("key", "value", 1000) == true
-  end
-
-  test "should increment cache size when insert" do
-    TestCache.purge_cache()
-    TestCache.insert("key", "value", 1000)
-    assert TestCache.size() == 1
-  end
-
-  test "keep alive should be an Integer" do
-    insert = TestCache.insert("key", "value", "1000")
-    assert insert == {:error, keep_alive_error()}
-  end
-
-  test "keep alive should be positive" do
-    insert = TestCache.insert("key", "value", 0)
-    assert insert == {:error, keep_alive_error()}
-  end
-
-  test "keep alive cannot be nil" do
-    insert = TestCache.insert("key", "value", nil)
-    assert insert == {:error, keep_alive_error()}
-  end
-
-  test "keep alive cannot be negative" do
-    insert = TestCache.insert("key", "value", -1)
-    assert insert == {:error, keep_alive_error()}
-  end
-
-  test "should delete element from cache" do
-    TestCache.insert("key", "value", 1000)
-    TestCache.delete("key")
-    assert TestCache.size() == 0
-  end
-
-  test "data exists when inserted" do
-    TestCache.insert("key", "value", 1000)
-    assert [{"key", "value", _}] = TestCache.lookup("key")
-  end
-
-  test "data cannot be looked up when deleted" do
-    TestCache.insert("key", "value", 1000)
-    TestCache.delete("key")
-    assert TestCache.lookup("key") == []
-  end
-
-  test "data is cleared correctly" do
-    TestCache.insert("key", "value", 1000)
+  setup do
+    start_supervised!(TestCache)
     TestCache.clear()
-    assert TestCache.lookup("key") == []
+
+    on_exit(fn ->
+      # avoid cross-test leakage
+      if :ets.whereis(TestCache.BUCKET) != :undefined do
+        TestCache.clear()
+      end
+    end)
+
+    :ok
   end
 
-  test "if there is data, cache is correctly cleared" do
-    TestCache.insert("key", "value", 1000)
-    assert TestCache.clear() == true
+  test "insert/3 and lookup/1 store and return raw ets-style rows" do
+    assert true = TestCache.insert(:a, 123)
+    assert [{:a, 123, :infinity}] = TestCache.lookup(:a)
+    assert [] = TestCache.lookup(:missing)
   end
 
-  test "data is not purged before its time" do
-    TestCache.insert("key", "value", 100_000)
-    TestCache.purge_cache()
-    assert [{"key", "value", ttl}] = TestCache.lookup("key")
-    assert is_number(ttl) && ttl > 0
+  test "get/1 returns idiomatic ok tuple or {:error, :not_found}" do
+    assert true = TestCache.insert(:a, "value")
+    assert {:ok, "value"} = TestCache.get(:a)
+    assert {:error, :not_found} = TestCache.get(:missing)
   end
 
-  test "data can be stored forever" do
-    TestCache.insert("key", "value")
-    TestCache.purge_cache()
-    [data] = TestCache.lookup("key")
-    assert elem(data, 2) == :keep_alive_forever
+  test "insert/3 rejects invalid keepalive values" do
+    assert {:error, _msg} = TestCache.insert(:a, 1, nil)
+    assert {:error, _msg} = TestCache.insert(:a, 1, 0)
+    assert {:error, _msg} = TestCache.insert(:a, 1, -10)
+    assert {:error, _msg} = TestCache.insert(:a, 1, 1.5)
+  end
+
+  test "delete/1 removes a key" do
+    assert true = TestCache.insert(:a, 1)
+    assert true = TestCache.delete(:a)
+    assert {:error, :not_found} = TestCache.get(:a)
+  end
+
+  test "clear/0 removes all keys" do
+    assert true = TestCache.insert(:a, 1)
+    assert true = TestCache.insert(:b, 2)
+
+    assert true = TestCache.clear()
+    assert 0 == TestCache.size()
+  end
+
+  test "get_through/2 returns cached value and does not call fill function" do
+    assert true = TestCache.insert(:a, "cached")
+
+    fill = fn _key ->
+      flunk("fill function should not be called when cache already contains key")
+    end
+
+    assert {:ok, "cached"} = TestCache.get_through(:a, fill)
+  end
+
+  test "get_through/2 fills cache on miss and returns fetched value" do
+    fill = fn :a -> {:ok, "filled"} end
+
+    assert {:ok, "filled"} = TestCache.get_through(:a, fill)
+    assert {:ok, "filled"} = TestCache.get(:a)
+  end
+
+  test "get_through/2 propagates fill failure on miss" do
+    fill = fn :a -> :bork end
+
+    assert :bork = TestCache.get_through(:a, fill)
+    assert {:error, :not_found} = TestCache.get(:a)
+  end
+
+  test "finite keepalive entries are pruned by background cleaner" do
+    assert true = TestCache.insert(:temp, "value", 10)
+    assert {:ok, "value"} = TestCache.get(:temp)
+
+    # give entry time to expire, plus enough time for prune loop to run
+    Process.sleep(100)
+
+    assert {:error, :not_found} = TestCache.get(:temp)
+  end
+
+  # almost tempted to remove :infinity as a potential value
+  test "infinity keepalive entries are not pruned" do
+    assert true = TestCache.insert(:perm, "value", :infinity)
+
+    Process.sleep(100)
+
+    assert {:ok, "value"} = TestCache.get(:perm)
   end
 end
