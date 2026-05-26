@@ -43,6 +43,8 @@ defmodule Rivet.Utils.Enum do
   {:ok, [3,4,6]}
   iex> map_while_ok([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
   {:error, "BAD"}
+  iex> map_while_ok([], &(&1))
+  {:ok, []}
   ```
   """
   @spec map_while_ok(list(a), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
@@ -61,6 +63,27 @@ defmodule Rivet.Utils.Enum do
 
   @doc """
   ```
+  iex> map_only_ok([{:ok, 1}, {:error, "bad"}, {:ok, 2}, {:error, "bad"}], &(&1))
+  {:ok, [1, 2]}
+  iex> map_only_ok([3, 4, 5, 6], fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  {:ok, [3, 4, 6]}
+  iex> map_only_ok([], &(&1))
+  {:ok, []}
+  ```
+  """
+  def map_only_ok(elems, fxn), do: map_only_ok(elems, [], fxn)
+
+  def map_only_ok([next | tail], results, fxn) do
+    case fxn.(next) do
+      {:ok, result} -> map_only_ok(tail, [result | results], fxn)
+      {:error, _} -> map_only_ok(tail, results, fxn)
+    end
+  end
+
+  def map_only_ok([], results, _), do: {:ok, Enum.reverse(results)}
+
+  @doc """
+  ```
   iex> flat_map_while_ok([1,2,3], fn x -> {:ok, [x + 1]} end)
   {:ok, [2,3,4]}
   iex> flat_map_while_ok([3,4,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
@@ -69,6 +92,8 @@ defmodule Rivet.Utils.Enum do
   {:ok, ["e", "i", "e", "i", "e", "o"]}
   iex> flat_map_while_ok([3,4,5,6], fn 5 -> {:error, "BAD"}; x -> {:ok, [x]} end)
   {:error, "BAD"}
+  iex> flat_map_while_ok([], &(&1))
+  {:ok, []}
   ```
   """
   @spec flat_map_while_ok(list(a), (a -> {:ok, list(b)} | {:error, e})) ::
