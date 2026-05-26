@@ -9,6 +9,8 @@ defmodule Rivet.Utils.Test do
   doctest Rivet.Utils.Enum, import: true
   doctest Rivet.Utils.List, import: true
   doctest Rivet.Utils.Math, import: true
+  doctest Rivet.Utils.Module, import: true
+  doctest Rivet.Utils.Ranges, import: true
   doctest Rivet.Utils.Redact, import: true
 
   describe "random/0" do
