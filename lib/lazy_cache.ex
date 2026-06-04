@@ -1,6 +1,6 @@
 defmodule Rivet.Utils.LazyCache do
   @moduledoc """
-  Originally lazy_cache @ https://hex.pm/packages/lazy_cache; but with updates.
+  Hat tip to https://hex.pm/packages/lazy_cache
   """
 
   @callback get(key :: any()) :: {:ok, any()} | {:error, :not_found}
@@ -11,7 +11,8 @@ defmodule Rivet.Utils.LazyCache do
       @bucket String.to_atom("#{__MODULE__}.BUCKET")
       require Logger
       use GenServer
-      import Rivet.Utils.Time, only: [epoch_time: 1]
+      @expires Keyword.get(opts, :expires, 300_000)
+      @wait_prune Keyword.get(opts, :wait_prune, 60_000)
 
       @doc """
       Start scheduling the works for clearing the cache.
@@ -19,44 +20,38 @@ defmodule Rivet.Utils.LazyCache do
 
       Returns `{:ok, PID}`.
       """
-      def start_link(_), do: GenServer.start_link(__MODULE__, %{})
+      def start_link(_), do: GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
 
       @doc """
       Store anything for a certain amount of time or forever if no keep alive time specified
-
-      Returns a boolean indicating if element has been correctly inserted.
       """
-      @spec insert(any(), any(), number() | atom()) :: boolean() | {:error, String.t()}
-      def insert(key, value, keepAliveInMillis \\ :keep_alive_forever) do
-        if not check_valid_keep_alive(keepAliveInMillis) do
-          {:error,
-           "Keep Alive Time is not valid. Should be a positive Integer or :keep_alive_forever."}
+      @spec insert(any(), any(), pos_integer() | :infinity) :: true | {:error, String.t()}
+      def insert(key, value, keepalive \\ :infinity) do
+        if not valid_keepalive?(keepalive) do
+          {:error, "Keep Alive Time is not valid. Should be a positive Integer or :infinity."}
         else
-          :ets.insert(
-            @bucket,
-            {key, value, get_keepalive(keepAliveInMillis)}
-          )
+          :ets.insert(@bucket, {key, value, get_keepalive(keepalive)})
         end
       end
 
       @doc """
-      Retrieve anything by its key.
-
-      Returns `[{your_stored_tuple}]`.
+      Retrieve anything by its key using the raw :ets.lookup call. less idiomatic than get,
+      but includes rescue for unexpected results that raise an error, instead turning
+      it into :error after logging the reason.
       """
       def lookup(key) do
         :ets.lookup(@bucket, key)
       rescue
         err ->
-          Logger.warning("Cache lookup error #{inspect(@bucket)} #{inspect(key)} #{inspect(err)}")
+          Logger.warning("Cache lookup fault #{inspect(@bucket)} #{inspect(key)} #{inspect(err)}")
           :error
       end
 
       @doc """
-      Take out the superstructure and just return the value in an idiomatic pattern
+      Return the value of a key in an idiomatic tuple
       """
-      def get(id) do
-        case lookup(id) do
+      def get(key) do
+        case lookup(key) do
           [{_, val, _}] -> {:ok, val}
           _ -> {:error, :not_found}
         end
@@ -65,66 +60,75 @@ defmodule Rivet.Utils.LazyCache do
       defoverridable get: 1
 
       @doc """
-      Delete anything by its key.
-
-      Returns a boolean indicating if element has been correctly deleted.
+      Similar to get, but call a function to lookup the value if it isn't in the cache.
       """
-      def delete(key), do: :ets.delete(@bucket, key)
+      def get_through(key, func) do
+        case lookup(key) do
+          [{_, value, _}] ->
+            {:ok, value}
 
-      @doc """
-      Obtain the number of elements stored in the cache.
-
-      Returns an integer equals or bigger than zero.
-      """
-      def size(), do: :ets.select_count(@bucket, [{{:_, :_, :_}, [], [true]}])
-
-      @doc """
-      Delete everything in the cache.
-
-      Returns a boolean indicating if cache has been correctly cleared.
-      """
-      def clear(), do: :ets.delete_all_objects(@bucket)
-
-      defp get_keepalive(keepAliveInMillis) do
-        if keepAliveInMillis == :keep_alive_forever do
-          :keep_alive_forever
-        else
-          epoch_time(:millisecond) + keepAliveInMillis
+          _ ->
+            with {:ok, value} <- func.(key) do
+              insert(key, value, @expires)
+              {:ok, value}
+            end
         end
       end
 
-      defp check_valid_keep_alive(keepAliveInMillis) do
-        keepAliveInMillis != nil and
-          (keepAliveInMillis == :keep_alive_forever or
-             (is_integer(keepAliveInMillis) and keepAliveInMillis > 0))
-      end
+      @doc """
+      Count of items in the cache.
+      """
+      def size(), do: :ets.info(@bucket, :size)
+      def delete(key), do: :ets.delete(@bucket, key)
+      def clear(), do: :ets.delete_all_objects(@bucket)
 
-      def purge_cache() do
-        now = epoch_time(:millisecond)
+      defp get_keepalive(:infinity), do: :infinity
+      defp get_keepalive(x), do: epoch_time() + x
 
-        :ets.select_delete(@bucket, [
-          {{:_, :_, :"$1"}, [{:is_number, :"$1"}, {:"=<", :"$1", now}], [true]}
-        ])
-      end
+      defp valid_keepalive?(keepalive) when keepalive == :infinity, do: true
+      defp valid_keepalive?(keepalive) when is_integer(keepalive) and keepalive > 0, do: true
+      defp valid_keepalive?(_), do: false
+
+      defp epoch_time(), do: System.monotonic_time(:millisecond)
 
       @impl true
       def init(state) do
-        :ets.new(@bucket, [:set, :public, :named_table])
-        {:ok, state, {:continue, :init_async}}
+        :ets.new(@bucket, [:set, :public, :named_table, read_concurrency: true])
+
+        # this is all to randomly distribute the cleanups and reduce spikes if
+        # there are a lot of caches
+        delay = :rand.uniform(trunc(@wait_prune * 0.95))
+        Process.send_after(self(), :start_cache_cleaner, delay)
+
+        {:ok, state}
       end
 
       @impl GenServer
-      @wait_purge 60_000
-      def handle_continue(:init_async, state) do
-        # this is all to randomly distribute the cleanups and reduce spikes
-        # if there are a lot of caches
-        delay = :rand.uniform(trunc(@wait_purge * 0.95))
-        Process.sleep(delay)
+      def handle_info(:start_cache_cleaner, state) do
+        {:ok, ref} = :timer.send_interval(@wait_prune, self(), :prune_cache)
+        {:noreply, Map.put(state, :ref, ref)}
+      end
 
-        :timer.apply_interval(@wait_purge, __MODULE__, :purge_cache, [])
+      # prune is inside this genserver, so if this takes long it can block cache calls
+      # optionally can do a Process.send_after interval call-back solution  (ala
+      # Interval)—if this becomes an issue -BJG
+      def handle_info(:prune_cache, state) do
+        now = epoch_time()
+
+        :ets.select_delete(@bucket, [
+          {{:_, :_, :"$1"}, [{:is_integer, :"$1"}, {:"=<", :"$1", now}], [true]}
+        ])
 
         {:noreply, state}
       end
+
+      @impl true
+      def terminate(_, %{ref: ref}) do
+        :timer.cancel(ref)
+        :ok
+      end
+
+      def terminate(_, _), do: :ok
     end
   end
 end

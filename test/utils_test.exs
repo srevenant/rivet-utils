@@ -4,10 +4,13 @@ defmodule Rivet.Utils.Test do
   doctest Rivet.Utils.Callbacks, import: true
   doctest Rivet.Utils.Codes, import: true
   # doctest Rivet.Utils.Color, import: true
+  doctest Rivet.Utils.DateTime, import: true
   doctest Rivet.Utils.Dig, import: true
   doctest Rivet.Utils.Enum, import: true
   doctest Rivet.Utils.List, import: true
   doctest Rivet.Utils.Math, import: true
+  doctest Rivet.Utils.Module, import: true
+  doctest Rivet.Utils.Ranges, import: true
   doctest Rivet.Utils.Redact, import: true
 
   describe "random/0" do
