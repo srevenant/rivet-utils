@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.3.0",
+      version: "2.3.1",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
@@ -14,11 +14,6 @@ defmodule Rivet.Utils.MixProject do
       deps: deps(),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [
-        coveralls: :test,
-        "coveralls.detail": :test,
-        "coveralls.html": :test
-      ],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ]
@@ -27,6 +22,16 @@ defmodule Rivet.Utils.MixProject do
 
   def application do
     [extra_applications: [:logger]]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.html": :test
+      ]
+    ]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
@@ -40,7 +45,6 @@ defmodule Rivet.Utils.MixProject do
       {:ecto, "~> 3.13"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
-      {:jason, "~> 1.0"},
       {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
       {:puid, "~> 2.0"},
       {:transmogrify, "~> 2.0.2"}
