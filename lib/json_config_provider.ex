@@ -49,7 +49,7 @@ defmodule Rivet.Utils.JsonConfigProvider do
     with {:ok, expanded} <- expand_path(path),
          {:ok, _} <- check_file_path(expanded),
          {:ok, body} <- File.read(expanded),
-         {:ok, cfg} <- Jason.decode(body),
+         {:ok, cfg} <- JSON.decode(body),
          keyword when is_list(keyword) <- to_keyword(cfg) do
       Config.Reader.merge(config, keyword)
     else
