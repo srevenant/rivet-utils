@@ -73,4 +73,3 @@ defmodule Rivet.Utils.Module do
   """
   def mod_id_key(input), do: mod_basename(input, :atom) |> id_key()
 end
-

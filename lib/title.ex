@@ -5,13 +5,12 @@ defmodule Rivet.Utils.Title do
     str
     |> String.split()
     |> Enum.with_index()
-    |> Enum.map(fn {word, i} ->
+    |> Enum.map_join(" ", fn {word, i} ->
       if i > 0 and String.downcase(word) in @skip do
         String.downcase(word)
       else
         String.capitalize(word)
       end
     end)
-    |> Enum.join(" ")
   end
 end

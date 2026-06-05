@@ -3,6 +3,10 @@ defmodule Rivet.Utils.DateTime do
   @hour_zero Map.put(@minute_zero, :hour, 0)
   @day_one Map.put(@hour_zero, :day, 1)
 
+  @sec_per_min 60
+  @min_per_hour 60
+  @sec_per_hour @sec_per_min * @min_per_hour
+
   @doc """
   iex> beginning_of_hour(~U[2026-05-12 19:43:50.393307Z])
   ~U[2026-05-12 19:00:00Z]
@@ -57,4 +61,32 @@ defmodule Rivet.Utils.DateTime do
     date_t = DateTime.to_unix(date)
     start_at_t <= date_t and date_t <= end_at_t
   end
+
+  @doc """
+  iex> assert {:ok, ~U[2025-04-01 00:00:00Z]} = utc_new(2025, 4)
+  iex> assert {:ok, ~U[2020-01-03 00:00:00Z]} = utc_new(2020, 1, 3)
+  iex> assert {:error, :invalid_date} = utc_new(2025, 2, 30)
+  iex> assert {:error, :invalid_date} = utc_new(2025, 4, 31)
+  iex> assert {:error, :invalid_date} = utc_new(2025, 0, 3)
+  iex> assert {:error, :invalid_date} = utc_new(2025, 1, 0)
+  """
+  @spec utc_new(integer(), pos_integer(), pos_integer()) :: {:ok, DateTime.t()} | {:error, atom()}
+  def utc_new(year, month, day \\ 1) do
+    with {:ok, date} <- Date.new(year, month, day),
+         {:ok, time} <- Time.new(0, 0, 0) do
+      DateTime.new(date, time, "Etc/UTC")
+    end
+  end
+
+  @doc """
+  iex> assert 24.0 = hours_between(~U[2025-04-01 00:00:00Z], ~U[2025-04-02 00:00:00Z])
+  iex> assert 48.0 = hours_between(~U[2025-04-01 00:00:00Z], ~U[2025-04-03 00:00:00Z])
+  iex> assert 3.0 = hours_between(~U[2025-04-01 00:00:00Z], ~U[2025-04-01 03:00:00Z])
+  iex> assert +0.0 = hours_between(~U[2025-04-01 00:00:00Z], ~U[2025-04-01 00:00:00Z])
+  iex> assert 0.5 = hours_between(~U[2025-04-01 00:00:00Z], ~U[2025-04-01 00:30:00Z])
+  iex> assert -4.0 = hours_between(~U[2025-04-01 05:00:00Z], ~U[2025-04-01 01:00:00Z])
+  """
+  @spec hours_between(DateTime.t(), DateTime.t()) :: float()
+  def hours_between(start_at, end_at),
+    do: (DateTime.to_unix(end_at) - DateTime.to_unix(start_at)) / @sec_per_hour
 end
