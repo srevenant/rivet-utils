@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.7.0",
+      version: "2.8.0",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
@@ -40,6 +40,7 @@ defmodule Rivet.Utils.MixProject do
       {:ecto, "~> 3.13"},
       {:excoveralls, "~> 0.14", only: :test},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
+      {:inflex, "~> 2.1.0"},
       {:jason, "~> 1.0"},
       {:mix_test_watch, "~> 1.0", only: [:test, :dev], runtime: false},
       {:puid, "~> 2.0"},
