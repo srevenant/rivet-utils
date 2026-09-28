@@ -60,12 +60,12 @@ defmodule Rivet.Utils.Enum do
   @spec map_while_ok(Enumerable.t(), (any -> {:ok, any} | {:error, any})) ::
           {:ok, list} | {:error, any}
   def map_while_ok(elems, fxn) do
-    reducer = fn elem, results ->
-      with {:ok, result} <- fxn.(elem), do: {:ok, [result | results]}
-    end
+    reducer =
+      fn elem, results ->
+        with {:ok, result} <- fxn.(elem), do: {:ok, [result | results]}
+      end
 
-    with {:ok, results} <- reduce_while_ok(elems, [], reducer),
-         do: {:ok, Enum.reverse(results)}
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
   end
 
   @doc """
@@ -87,8 +87,7 @@ defmodule Rivet.Utils.Enum do
       end
     end
 
-    with {:ok, results} <- reduce_while_ok(elems, [], reducer),
-         do: {:ok, Enum.reverse(results)}
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
   end
 
   @doc """
@@ -112,10 +111,10 @@ defmodule Rivet.Utils.Enum do
       with {:ok, result} <- fxn.(elem), do: {:ok, reverse_concat(result, results)}
     end
 
-    with {:ok, results} <- reduce_while_ok(elems, [], reducer),
-         do: {:ok, Enum.reverse(results)}
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
   end
 
+  # reverse_concat(a, b) ≡ Enum.reverse(a) ++ b
   @spec reverse_concat(list(a), list(a)) :: list(a) when a: term()
   defp reverse_concat([head | tail], list), do: reverse_concat(tail, [head | list])
   defp reverse_concat([], list), do: list
@@ -128,13 +127,17 @@ defmodule Rivet.Utils.Enum do
   {:error, :out_of_bounds}
   ```
   """
-  def reduce_while_ok(elems, init, fxn) do
-    Enum.reduce_while(elems, {:ok, init}, fn elem, {:ok, acc} ->
+  def reduce_while_ok(elems, init, fxn, after_fxn \\ & &1) do
+    reducer = fn elem, {:ok, acc} ->
       case fxn.(elem, acc) do
         {:ok, _} = result -> {:cont, result}
         {:error, _} = error -> {:halt, error}
       end
-    end)
+    end
+
+    with {:ok, result} <- Enum.reduce_while(elems, {:ok, init}, reducer) do
+      {:ok, after_fxn.(result)}
+    end
   end
 
   @deprecated "Use map_while_ok/2 instead"
