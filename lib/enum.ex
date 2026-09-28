@@ -45,21 +45,28 @@ defmodule Rivet.Utils.Enum do
   {:error, "BAD"}
   iex> map_while_ok([], &(&1))
   {:ok, []}
+  iex> {:ok, results} = map_while_ok(%{a: 1, b: 2}, fn {_, v} -> {:ok, v} end)
+  iex> Enum.sort(results)
+  [1,2]
+  iex> map_while_ok(%{a: 1, b: 2}, fn {:b, _} -> {:error, :bad_key}; {_, v} -> {:ok, v} end)
+  {:error, :bad_key}
+  iex> map_while_ok(1..6, fn x -> {:ok, x} end)
+  {:ok, [1,2,3,4,5,6]}
+  iex> map_while_ok(0..100_000_000, fn 5 -> {:error, "BAD"}; x -> {:ok, x} end)
+  {:error, "BAD"}
   ```
   """
-  @spec map_while_ok(list(a), (a -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, list(b)}
-        when a: term(), b: term(), e: term()
-  @spec map_while_ok(list(a), list(b), (a -> {:ok, b} | {:error, e})) ::
-          {:error, e} | {:ok, list(b)}
-        when a: term(), b: term(), e: term()
-  def map_while_ok(elems, fxn), do: map_while_ok(elems, [], fxn)
 
-  def map_while_ok([next | tail], results, fxn) do
-    with {:ok, result} <- fxn.(next),
-         do: map_while_ok(tail, [result | results], fxn)
+  @spec map_while_ok(Enumerable.t(), (any -> {:ok, any} | {:error, any})) ::
+          {:ok, list} | {:error, any}
+  def map_while_ok(elems, fxn) do
+    reducer =
+      fn elem, results ->
+        with {:ok, result} <- fxn.(elem), do: {:ok, [result | results]}
+      end
+
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
   end
-
-  def map_while_ok([], results, _), do: {:ok, Enum.reverse(results)}
 
   @doc """
   ```
@@ -71,16 +78,17 @@ defmodule Rivet.Utils.Enum do
   {:ok, []}
   ```
   """
-  def map_only_ok(elems, fxn), do: map_only_ok(elems, [], fxn)
-
-  def map_only_ok([next | tail], results, fxn) do
-    case fxn.(next) do
-      {:ok, result} -> map_only_ok(tail, [result | results], fxn)
-      {:error, _} -> map_only_ok(tail, results, fxn)
+  @spec map_only_ok(Enumerable.t(), (any -> {:ok, any} | {:error, any})) :: {:ok, list}
+  def map_only_ok(elems, fxn) do
+    reducer = fn elem, results ->
+      case fxn.(elem) do
+        {:ok, result} -> {:ok, [result | results]}
+        {:error, _} -> {:ok, results}
+      end
     end
-  end
 
-  def map_only_ok([], results, _), do: {:ok, Enum.reverse(results)}
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
+  end
 
   @doc """
   ```
@@ -96,21 +104,17 @@ defmodule Rivet.Utils.Enum do
   {:ok, []}
   ```
   """
-  @spec flat_map_while_ok(list(a), (a -> {:ok, list(b)} | {:error, e})) ::
-          {:error, e} | {:ok, list(b)}
-        when a: term(), b: term(), e: term()
-  @spec flat_map_while_ok(list(a), list(b), (a -> {:ok, list(b)} | {:error, e})) ::
-          {:error, e} | {:ok, list(b)}
-        when a: term(), b: term(), e: term()
-  def flat_map_while_ok(elems, fxn), do: flat_map_while_ok(elems, [], fxn)
+  @spec flat_map_while_ok(Enumerable.t(), (any -> {:ok, list(any)} | {:error, any})) ::
+          {:ok, list} | {:error, any}
+  def flat_map_while_ok(elems, fxn) do
+    reducer = fn elem, results ->
+      with {:ok, result} <- fxn.(elem), do: {:ok, reverse_concat(result, results)}
+    end
 
-  def flat_map_while_ok([next | tail], acc, fxn) do
-    with {:ok, results} <- fxn.(next),
-         do: flat_map_while_ok(tail, reverse_concat(results, acc), fxn)
+    reduce_while_ok(elems, [], reducer, &Enum.reverse/1)
   end
 
-  def flat_map_while_ok([], results, _), do: {:ok, Enum.reverse(results)}
-
+  # reverse_concat(a, b) ≡ Enum.reverse(a) ++ b
   @spec reverse_concat(list(a), list(a)) :: list(a) when a: term()
   defp reverse_concat([head | tail], list), do: reverse_concat(tail, [head | list])
   defp reverse_concat([], list), do: list
@@ -123,13 +127,18 @@ defmodule Rivet.Utils.Enum do
   {:error, :out_of_bounds}
   ```
   """
-  @spec reduce_while_ok(list(a), b, (a, b -> {:ok, b} | {:error, e})) :: {:error, e} | {:ok, b}
-        when a: term(), b: term(), e: term()
-  def reduce_while_ok([next | tail], acc, fxn) do
-    with {:ok, acc} <- fxn.(next, acc), do: reduce_while_ok(tail, acc, fxn)
-  end
+  def reduce_while_ok(elems, init, fxn, after_fxn \\ & &1) do
+    reducer = fn elem, {:ok, acc} ->
+      case fxn.(elem, acc) do
+        {:ok, _} = result -> {:cont, result}
+        {:error, _} = error -> {:halt, error}
+      end
+    end
 
-  def reduce_while_ok([], acc, _), do: {:ok, acc}
+    with {:ok, result} <- Enum.reduce_while(elems, {:ok, init}, reducer) do
+      {:ok, after_fxn.(result)}
+    end
+  end
 
   @deprecated "Use map_while_ok/2 instead"
   def scmap(a, b), do: map_while_ok(a, b)

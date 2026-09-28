@@ -4,7 +4,7 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.8.0",
+      version: "2.8.1",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
@@ -12,6 +12,7 @@ defmodule Rivet.Utils.MixProject do
       docs: [main: "Rivet.Utils"],
       package: package(),
       deps: deps(),
+      aliases: aliases(),
       start_permanent: Mix.env() == :prod,
       test_coverage: [tool: ExCoveralls],
       dialyzer: [
@@ -36,6 +37,12 @@ defmodule Rivet.Utils.MixProject do
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
+
+  defp aliases do
+    [
+      c: ["compile"]
+    ]
+  end
 
   defp deps do
     [
