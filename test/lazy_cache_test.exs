@@ -1,4 +1,3 @@
-
 defmodule Rivet.Utils.LazyCacheTest do
   use ExUnit.Case
   alias Rivet.Utils.Test.TestCache
