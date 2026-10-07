@@ -154,6 +154,7 @@ defmodule Rivet.Utils.Module.PathChecker do
         Path.rootname(path)
         |> strip_special_names()
         |> String.replace_prefix("lib/", "")
+        |> String.replace_prefix("support/", "")
 
       modname = Transmogrify.Modulename.convert(p)
       modname = if is_nil(prefix), do: modname, else: "#{prefix}.#{modname}"
