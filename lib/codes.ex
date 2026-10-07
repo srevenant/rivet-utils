@@ -8,9 +8,7 @@ defmodule Rivet.Utils.Codes do
   iex> String.length(uuid)
   31
   """
-  def stripped_uuid do
-    Ecto.UUID.generate() |> stripped_uuid
-  end
+  def stripped_uuid, do: Ecto.UUID.generate() |> stripped_uuid
 
   def stripped_uuid(uuid) do
     clean = cleaned_short_id(uuid)
