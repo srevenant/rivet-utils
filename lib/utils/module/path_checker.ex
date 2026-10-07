@@ -141,7 +141,7 @@ defmodule Rivet.Utils.Module.PathChecker do
 
       [first | _] =
         String.split(data, "\n")
-        |> Enum.reject(&String.starts_with?(&1, "#"))
+        |> Enum.reject(&Regex.match?(~r/(^\s*$|^\s*#)/, &1))
 
       {data,
        first
