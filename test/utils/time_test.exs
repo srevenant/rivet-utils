@@ -1,4 +1,4 @@
-defmodule Rivet.Utils.Test.Time do
+defmodule Rivet.Utils.Test.Utils.TimeTest do
   use ExUnit.Case
   doctest Rivet.Utils.Time, import: true
   alias Rivet.Utils.Time

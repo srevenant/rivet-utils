@@ -1,4 +1,4 @@
-defmodule Rivet.Utils.Test.UniformLogFormat do
+defmodule Rivet.Utils.Test.Utils.UniformLogFormatTest do
   use ExUnit.Case, async: true
   alias Rivet.Utils.UniformLogFormat
 

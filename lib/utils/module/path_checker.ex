@@ -1,9 +1,9 @@
 defmodule Rivet.Utils.Module.PathChecker do
   @moduledoc """
 
-  Rivet.Ident.Test.Support.PathChecker.check("test", prefix: "Rivet.Utils")
-  Rivet.Ident.Test.Support.PathChecker.check("lib", no_exs: true, rules: :lib, prefix: "Rivet.Utils")
-  Rivet.Ident.Test.Support.PathChecker.fix("test", prefix: "Rivet.Utils")
+  Rivet.Utils.Module.PathChecker.check("test", prefix: "Rivet.Utils")
+  Rivet.Utils.Module.PathChecker.check("lib", no_exs: true, rules: :lib, prefix: "Rivet.Utils")
+  Rivet.Utils.Module.PathChecker.fix("test", prefix: "Rivet.Utils")
 
   """
 

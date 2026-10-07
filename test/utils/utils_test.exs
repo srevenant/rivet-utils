@@ -1,4 +1,4 @@
-defmodule Rivet.Utils.Test do
+defmodule Rivet.Utils.Test.Utils.UtilsTest do
   use ExUnit.Case
 
   doctest Rivet.Utils.Callbacks, import: true

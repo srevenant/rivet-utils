@@ -1,4 +1,4 @@
-defmodule Rivet.Utils.Test.JsonConfigProvider do
+defmodule Rivet.Utils.Test.Utils.JsonConfigProviderTest do
   use ExUnit.Case
   doctest Rivet.Utils.JsonConfigProvider, import: true
 

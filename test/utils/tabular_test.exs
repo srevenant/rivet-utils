@@ -1,4 +1,4 @@
-defmodule Rivet.Utils.TabularTest do
+defmodule Rivet.Utils.Test.Utils.TabularTest do
   use ExUnit.Case
   alias Rivet.Utils.Tabular
 
