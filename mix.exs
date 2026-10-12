@@ -4,12 +4,12 @@ defmodule Rivet.Utils.MixProject do
   def project do
     [
       app: :rivet_utils,
-      version: "2.8.2",
+      version: "3.0.0-rc.1",
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       description: "Bespoke utilities for the Elixir Rivet Framework",
       source_url: "https://github.com/srevenant/rivet-utils",
-      docs: [main: "Rivet.Utils"],
+      # docs: [main: "Rivet.Utils"],
       package: package(),
       deps: deps(),
       start_permanent: Mix.env() == :prod,
