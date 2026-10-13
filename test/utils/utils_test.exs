@@ -8,6 +8,7 @@ defmodule Rivet.Utils.Test.Utils.UtilsTest do
   doctest Rivet.Utils.English, import: true
   doctest Rivet.Utils.Enum, import: true
   doctest Rivet.Utils.List, import: true
+  doctest Rivet.Utils.Map, import: true
   doctest Rivet.Utils.Math, import: true
   doctest Rivet.Utils.Module, import: true
   doctest Rivet.Utils.Ranges, import: true
